@@ -4,6 +4,7 @@ import remote.HRMService;
 import javax.swing.*;
 import java.awt.*;
 import java.rmi.Naming;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -21,6 +22,15 @@ public class LoginFrame extends JFrame {
         setSize(400, 300);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+
+        try {
+            service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "Failed to connect to RMI server: " + e.getMessage(),
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
 
         // TODO: [SECURITY - implement last] Use SSL/TLS socket factory before RMI lookup
         // TODO: Connect to RMI server: service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService")
@@ -66,10 +76,38 @@ public class LoginFrame extends JFrame {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
 
-        // TODO: call service.login(username, password)
-        // TODO: call service.getUserRole(username) to determine which dashboard to open
-        // TODO: if role is "HR" open HRDashboard, if "EMPLOYEE" open EmployeeDashboard
-        // TODO: show error message on failed login
+        if (username.isEmpty() || password.isEmpty()) {
+            statusLabel.setText("Please enter both username and password.");
+            return;
+        }
+
+        try {
+            String role = service.login(username, password);
+
+            if (role == null) {
+                statusLabel.setText("Invalid username or password.");
+                JOptionPane.showMessageDialog(this,
+                        "Invalid username or password.",
+                        "Login Failed",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            dispose();
+
+            if (role.equals("HR")) {
+                new HRDashboard(service, username).setVisible(true);
+            } else  {
+                new EmployeeDashboard(service, username).setVisible(true);
+            }
+
+        } catch (Exception e) {
+            statusLabel.setText("Login error occurred.");
+            JOptionPane.showMessageDialog(this,
+                    "Error during login: " + e.getMessage(),
+                    "Login Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public static void main(String[] args) {

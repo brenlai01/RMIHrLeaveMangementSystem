@@ -39,7 +39,8 @@ public class HRDashboard extends JFrame {
 
         logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> {
-            // TODO: close window, reopen LoginFrame
+            dispose();
+            new LoginFrame().setVisible(true);
         });
 
         panel.add(registerEmployeeButton);

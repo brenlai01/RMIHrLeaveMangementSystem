@@ -6,6 +6,9 @@ import model.LeaveApplication;
 import database.DatabaseConnection;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -17,15 +20,45 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     }
 
     @Override
-    public boolean login(String username, String password) throws RemoteException {
-        // TODO: query hr_staff and employees table, verify credentials
-        return false;
-    }
+    // Method to check user credentials in employee and HR tables
+    public String login(String username, String password) throws RemoteException {
+        String hrSql = "SELECT * FROM hr_staff WHERE username = ? AND password = ?";
+        String empSql = "SELECT * FROM employees WHERE username = ? AND password = ?";
 
-    @Override
-    public String getUserRole(String username) throws RemoteException {
-        // TODO: check hr_staff table first, then employees table
-        return null;
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            // Check hr_staff table first
+            try (PreparedStatement hrStmt = connection.prepareStatement(hrSql)) {
+                hrStmt.setString(1, username);
+                hrStmt.setString(2, password);
+
+                try (ResultSet hrRs = hrStmt.executeQuery()) {
+                    if (hrRs.next()) {
+                        return "HR";
+                    }
+                }
+            }
+
+            // Check employees table if user not in  hr_staff table
+            try (PreparedStatement empStmt = connection.prepareStatement(empSql)) {
+                empStmt.setString(1, username);
+                empStmt.setString(2, password);
+
+                try (ResultSet empRs = empStmt.executeQuery()) {
+                    if (empRs.next()) {
+                        return "Employee";
+                    }
+                }
+            }
+            // return null if user credentials not found in both tables
+            return null;
+
+        } catch (Exception e) {
+            throw new RemoteException("Error during login: " + e.getMessage(), e);
+        }
     }
 
     @Override

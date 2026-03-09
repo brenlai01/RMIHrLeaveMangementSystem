@@ -68,7 +68,8 @@ public class EmployeeDashboard extends JFrame {
 
         logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> {
-            // TODO: close window, reopen LoginFrame
+            dispose();
+            new LoginFrame().setVisible(true);
         });
 
         panel.add(viewPersonalDetailsButton);

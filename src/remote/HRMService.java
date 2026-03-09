@@ -9,10 +9,8 @@ import java.util.List;
 /** RMI Remote Interface - defines all services available to clients over the network */
 public interface HRMService extends Remote {
 
-    boolean login(String username, String password) throws RemoteException;
-
-    // returns "HR" or "EMPLOYEE"
-    String getUserRole(String username) throws RemoteException;
+    // will return user role (HR or Employee) on successful login, null if credentials are invalid
+    String login(String username, String password) throws RemoteException;
 
     void registerEmployee(Employee emp) throws RemoteException;
 
