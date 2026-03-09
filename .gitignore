@@ -8,13 +8,13 @@
 bin/
 out/
 build/
+target/
 
-# IDE files
+# IDE files - ignore most of .idea but keep module config
 .idea/
+!.idea/modules.xml
 *.iml
-.vscode/
-*.project
-*.classpath
+!RMIHrLeaveManagementSystem.iml
 
 # OS files
 .DS_Store

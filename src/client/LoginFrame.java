@@ -24,6 +24,7 @@ public class LoginFrame extends JFrame {
         setLocationRelativeTo(null);
 
         try {
+            // RMB to change this when use other device
             service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null,
