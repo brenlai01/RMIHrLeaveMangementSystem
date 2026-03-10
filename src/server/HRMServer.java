@@ -4,7 +4,10 @@ import service.HRMServiceImpl;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-// RMI server inherently supports multithreading - each client request runs in its own thread
+// RMI server inherently supports multithreading - each client request runs in its own thread.
+// The RMI runtime maintains an internal thread pool (java.util.concurrent) and automatically
+// assigns a fresh thread to every incoming remote method invocation.  No manual Thread
+// creation is needed; concurrent calls to HRMServiceImpl are handled transparently.
 public class HRMServer {
 
     public static void main(String[] args) {
@@ -21,6 +24,7 @@ public class HRMServer {
 
             System.out.println("[SERVER] HRM RMI Server is running on port 1099...");
             System.out.println("[SERVER] Waiting for client connections...");
+            System.out.println("[SERVER] Multithreaded: each client call is dispatched on its own RMI thread automatically.");
         } catch (Exception e) {
             e.printStackTrace();
         }

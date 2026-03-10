@@ -19,9 +19,18 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
         super();
     }
 
+    // Logs the name of the thread currently handling this RMI call.
+    // RMI dispatches each remote call on a separate server-side thread from its
+    // internal thread pool, so concurrent clients will show different thread names.
+    private void logThread(String methodName) {
+        System.out.println("[THREAD] " + Thread.currentThread().getName()
+                + " handling " + methodName);
+    }
+
     @Override
     // Method to check user credentials in employee and HR tables
     public String login(String username, String password) throws RemoteException {
+        logThread("login()"); // RMI runs this on a separate thread per client call
         String hrSql = "SELECT * FROM hr_staff WHERE username = ? AND password = ?";
         String empSql = "SELECT * FROM employees WHERE username = ? AND password = ?";
 
@@ -84,6 +93,7 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     @Override
     public int checkLeaveBalance(String username) throws RemoteException {
+        logThread("checkLeaveBalance()"); // RMI runs this on a separate thread per client call
         // TODO: query leave_balance from employees table
         return 0;
     }

@@ -155,7 +155,46 @@ RMIHrLeaveMangementSystem/
 
 ---
 
-## Security Notes
+## Multithreading in Java RMI
+
+This project does **not** manually create any threads (no `new Thread(...)` or `ExecutorService` calls).  
+Multithreading is provided automatically by the **Java RMI runtime**.
+
+How it works:
+
+```
+Client 1 (Employee PC)  ──→ ┐
+Client 2 (HR Laptop)    ──→ ├──→ RMI Server (HRMServer)
+Client 3 (Employee PC)  ──→ ┘         │
+                                       ▼
+                          ┌─────────────────────────────┐
+                          │  RMI Internal Thread Pool    │
+                          │                             │
+                          │  Thread-1 → login()         │
+                          │  Thread-2 → checkLeaveBalance() │
+                          │  Thread-3 → login()         │
+                          └─────────────────────────────┘
+                                       │
+                                  HRMServiceImpl
+                                       │
+                                  MySQL Database
+```
+
+Key points:
+
+- When a client calls a remote method, the RMI runtime picks a thread from its **internal thread pool** and executes the method on that thread.
+- Each concurrent client call therefore runs on a **different thread**; this is visible from the `[THREAD]` log lines printed by `HRMServiceImpl`.  
+  Example output when two clients call `login()` simultaneously:
+  ```
+  [THREAD] RMI TCP Connection(1)-127.0.0.1 handling login()
+  [THREAD] RMI TCP Connection(2)-127.0.0.1 handling login()
+  ```
+- Because multiple threads share the single `HRMServiceImpl` instance, methods that modify shared state (e.g. `applyLeave()`) should be marked `synchronized` to prevent race conditions when they are implemented.
+- This design is standard in industry distributed systems — developers write normal sequential code and the RMI/NIO layer handles concurrency transparently.
+
+---
+
+
 
 > **SSL/TLS:** The server and client contain TODO comments for adding SSL/TLS socket factories to the RMI connection. This should be confirmed with the lecturer and **implemented last**, after all core business logic is complete.
 
