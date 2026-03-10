@@ -33,6 +33,70 @@ This system allows HR staff to manage employee leave applications and allows emp
 
 ---
 
+## Multithreading
+
+Java RMI handles concurrency **automatically** — no `new Thread(...)` or `ExecutorService` is
+written anywhere in this project.  The relevant lines are:
+
+### Where the RMI thread pool takes over — `HRMServer.java`
+
+```
+registry.rebind("HRMService", service);
+```
+
+> [`src/server/HRMServer.java` — `registry.rebind()` call](src/server/HRMServer.java)
+>
+> After `rebind()` registers the service, the JVM's internal RMI dispatcher accepts incoming
+> TCP connections and routes each remote method call to a dedicated thread from its thread
+> pool.  The `main` thread finishes, but the RMI runtime keeps the JVM alive.
+
+### Where the dispatch thread executes application logic — `HRMServiceImpl.java`
+
+```java
+// MULTITHREADING: This class is the remote object implementation exported by HRMServer.
+// The RMI runtime (java.rmi.server.UnicastRemoteObject) automatically dispatches every
+// incoming remote method call on a dedicated thread from its internal thread pool.
+public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
+```
+
+> [`src/service/HRMServiceImpl.java` — class declaration](src/service/HRMServiceImpl.java)
+>
+> Every method in this class (e.g. `login()`, `applyLeave()`) runs on a thread whose name
+> follows the pattern `RMI TCP Connection(n)` — created and managed entirely by the RMI
+> runtime.
+
+### Thread-name logging that proves it — `HRMServiceImpl.java` `login()`
+
+```java
+System.out.println("[THREAD] " + Thread.currentThread().getName()
+        + " handling login() for user: " + username);
+```
+
+> [`src/service/HRMServiceImpl.java` — thread log inside `login()`](src/service/HRMServiceImpl.java)
+>
+> When two clients log in at the same time the server console prints two **different** thread
+> names, e.g.:
+> ```
+> [THREAD] RMI TCP Connection(1) handling login() for user: emp001
+> [THREAD] RMI TCP Connection(2) handling login() for user: admin
+> ```
+> Those different names confirm that both requests are being served concurrently by the
+> RMI-managed thread pool — not by the `main` thread.
+
+### ⚠️ Thread-safety note
+
+Because multiple threads share the same `HRMServiceImpl` instance, methods that modify
+shared state (e.g. `applyLeave()`) should be declared `synchronized` to prevent race
+conditions on the leave balance:
+
+```java
+public synchronized void applyLeave(LeaveApplication application) throws RemoteException {
+    // safe: only one thread enters at a time
+}
+```
+
+---
+
 ## Project Structure
 
 ```

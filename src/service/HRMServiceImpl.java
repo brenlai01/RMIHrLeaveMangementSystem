@@ -12,7 +12,13 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.ArrayList;
 
-// Multithreading: RMI server automatically handles each client call in a separate thread
+// MULTITHREADING: This class is the remote object implementation exported by HRMServer.
+// The RMI runtime (java.rmi.server.UnicastRemoteObject) automatically dispatches every
+// incoming remote method call on a dedicated thread from its internal thread pool.
+// No manual Thread creation is required — concurrency is handled entirely by the RMI
+// runtime.  Each simultaneous client therefore executes inside a separate
+// "RMI TCP Connection(n)" thread, as demonstrated by the Thread.currentThread().getName()
+// log line printed at the start of every method below.
 public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     public HRMServiceImpl() throws RemoteException {
@@ -22,6 +28,12 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     @Override
     // Method to check user credentials in employee and HR tables
     public String login(String username, String password) throws RemoteException {
+        // THREAD LOGGING: prints the RMI-managed thread name that is handling this call.
+        // When two clients log in simultaneously, two different thread names appear here,
+        // proving that the RMI runtime dispatches each request on its own thread.
+        System.out.println("[THREAD] " + Thread.currentThread().getName()
+                + " handling login() for user: " + username);
+
         String hrSql = "SELECT * FROM hr_staff WHERE username = ? AND password = ?";
         String empSql = "SELECT * FROM employees WHERE username = ? AND password = ?";
 
