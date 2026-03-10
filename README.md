@@ -66,50 +66,8 @@ RMIHrLeaveMangementSystem/
 │   └── hrm_database.sql
 │
 └── README.md
+
 ```
-
----
-
-## Prerequisites
-
-- **Java JDK 8+**
-- **MySQL 8+**
-- **mysql-connector-java JAR** (e.g., `mysql-connector-j-8.x.x.jar`)
-
----
-
-## Setup Instructions
-
-1. **Import SQL Schema**
-   - Open MySQL Workbench or MySQL CLI
-   - Run: `source sql/hrm_database.sql`
-
-2. **Configure Database Connection**
-   - Open `database/DatabaseConnection.java`
-   - Update the `PASSWORD` constant to match your MySQL root password
-
-3. **Add MySQL Connector to Classpath**
-   - Download `mysql-connector-java` JAR
-   - Place it in the project root or a `lib/` directory
-
-4. **Compile the Project**
-   ```bash
-   javac -cp .:lib/mysql-connector-j-8.x.x.jar \
-       model/*.java remote/*.java database/*.java \
-       service/*.java server/*.java client/*.java
-   ```
-
-5. **Run the RMI Server**
-   ```bash
-   java -cp .:lib/mysql-connector-j-8.x.x.jar server.HRMServer
-   ```
-
-6. **Run the Client**
-   ```bash
-   java -cp .:lib/mysql-connector-j-8.x.x.jar client.LoginFrame
-   ```
-
----
 
 ## Team Task Breakdown
 
@@ -143,6 +101,7 @@ RMIHrLeaveMangementSystem/
 |----------------------------------|----------|----------|
 | Login                            | ✔        | ✔        |
 | Register Employee                | ✔        |          |
+| Set Employee Number of Leaves    | ✔        |          |
 | View All Employees               | ✔        |          |
 | Generate Yearly Leave Report     | ✔        |          |
 | View Personal Details            |          | ✔        |
