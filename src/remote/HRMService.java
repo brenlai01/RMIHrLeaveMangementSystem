@@ -29,4 +29,12 @@ public interface HRMService extends Remote {
     List<LeaveApplication> getLeaveStatus(String username) throws RemoteException;
 
     List<LeaveApplication> generateYearlyReport(int year) throws RemoteException;
+
+    List<Employee> getAllEmployees() throws RemoteException;
+
+    void updateEmployee(Employee emp) throws RemoteException;
+
+    void deleteEmployee(int employeeId) throws RemoteException;
+
+    void setAndUpdateLeaveBalance(int employeeId, int leaveBalance) throws RemoteException;
 }
