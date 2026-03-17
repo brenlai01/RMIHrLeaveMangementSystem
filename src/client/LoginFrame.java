@@ -69,6 +69,8 @@ public class LoginFrame extends JFrame {
 
         loginButton.addActionListener(e -> handleLogin());
 
+        getRootPane().setDefaultButton(loginButton);
+
         // TODO: style components as needed
         add(panel);
     }

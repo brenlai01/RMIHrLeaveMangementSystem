@@ -101,6 +101,51 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
         // TODO: query all leave applications for employee
         return new ArrayList<>();
     }
+        List<LeaveApplication> history = new ArrayList<>();
+
+        String leaveSql = "SELECT * FROM leave_applications WHERE employee_id = ? ORDER BY applied_at DESC";
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            int employeeId = -1;
+
+            // Get Employee ID
+            Employee emp = getEmployeeDetails(username);
+
+            if (emp == null) {
+                return history;
+            }
+
+            employeeId = emp.getEmployeeId();
+
+            // Step 2: Get leave applications
+            try (PreparedStatement leaveStmt = connection.prepareStatement(leaveSql)) {
+                leaveStmt.setInt(1, employeeId);
+                try (ResultSet leaveRs = leaveStmt.executeQuery()) {
+                    while (leaveRs.next()) {
+                        LeaveApplication leave = new LeaveApplication();
+                        leave.setLeaveId(leaveRs.getInt("leave_id"));
+                        leave.setEmployeeId(leaveRs.getInt("employee_id"));
+                        leave.setStartDate(String.valueOf(leaveRs.getDate("start_date")));
+                        leave.setEndDate(String.valueOf(leaveRs.getDate("end_date")));
+                        leave.setReason(leaveRs.getString("reason"));
+                        leave.setStatus(leaveRs.getString("status"));
+                        leave.setAppliedAt(leaveRs.getString("applied_at"));
+
+                        history.add(leave);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RemoteException("Error fetching leave history: " + e.getMessage(), e);
+        }
+
+        return history;
+    }
 
     @Override
     public List<LeaveApplication> getLeaveStatus(String username) throws RemoteException {

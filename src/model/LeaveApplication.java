@@ -13,6 +13,7 @@ public class LeaveApplication implements Serializable {
     private String endDate;
     private String reason;
     private String status = "PENDING";
+    private String appliedAt;
 
     public LeaveApplication() {
     }
@@ -72,6 +73,14 @@ public class LeaveApplication implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getAppliedAt() {
+        return appliedAt;
+    }
+
+    public void setAppliedAt(String appliedAt) {
+        this.appliedAt = appliedAt;
     }
 
     @Override
