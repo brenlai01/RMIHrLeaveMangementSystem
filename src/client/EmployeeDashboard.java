@@ -35,7 +35,8 @@ public class EmployeeDashboard extends JFrame {
 
         viewPersonalDetailsButton = new JButton("View Personal Details");
         viewPersonalDetailsButton.addActionListener(e -> {
-            // TODO: call service.getEmployeeDetails(username) and display
+            ViewPersonalDetailsForm form = new ViewPersonalDetailsForm(service, username);
+            form.setVisible(true);
         });
 
         updatePersonalDetailsButton = new JButton("Update Personal Details");
