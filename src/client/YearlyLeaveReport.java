@@ -19,6 +19,7 @@ public class YearlyLeaveReport extends JFrame {
     private JTable leaveTable;
     private DefaultTableModel tableModel;
     private JLabel totalDaysLabel, approvedLabel, rejectedLabel, pendingLabel;
+    private JButton backButton;
 
     public YearlyLeaveReport(HRMService service, String employeeName) throws RemoteException {
         super("Yearly Leave Report for " + employeeName);
@@ -37,7 +38,7 @@ public class YearlyLeaveReport extends JFrame {
      * Build the UI layout only
      */
     private void initComponents() {
-        setLayout(new BorderLayout(10, 10)); // 10px gap around components
+        setLayout(new BorderLayout(10, 10));
         ((JPanel) getContentPane()).setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // padding around edges
 
         // Title
@@ -57,8 +58,6 @@ public class YearlyLeaveReport extends JFrame {
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         tablePanel.add(new JScrollPane(leaveTable), BorderLayout.CENTER);
-
-        add(tablePanel, BorderLayout.CENTER);
 
         // Summary
         JPanel summaryPanel = new JPanel(new GridLayout(2, 2, 10, 5)); // hgap=10, vgap=5
@@ -80,7 +79,24 @@ public class YearlyLeaveReport extends JFrame {
         summaryPanel.add(rejectedLabel);
         summaryPanel.add(pendingLabel);
 
-        add(summaryPanel, BorderLayout.SOUTH);
+        // Back button
+        backButton = new JButton("Go Back to Dashboard");
+        backButton.setPreferredSize(new Dimension(220, 40));
+        backButton.addActionListener(e -> {
+            dispose();
+            new EmployeeDashboard(service, employeeName).setVisible(true);
+        });
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        buttonPanel.add(backButton);
+
+        // Combine summary + button
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(summaryPanel, BorderLayout.CENTER);
+        bottomPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        add(tablePanel, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     /**
