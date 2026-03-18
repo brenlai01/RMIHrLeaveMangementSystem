@@ -9,6 +9,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -42,7 +43,7 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
                 }
             }
 
-            // Check employees table if user not in hr_staff table
+            // Check employees table if user not in  hr_staff table
             try (PreparedStatement empStmt = connection.prepareStatement(empSql)) {
                 empStmt.setString(1, username);
                 empStmt.setString(2, password);
@@ -112,8 +113,35 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     @Override
     public Employee getEmployeeDetails(String username) throws RemoteException {
-        // TODO: query employees table by username
-        return null;
+        String empSql = "SELECT * FROM employees WHERE username = ?";
+        Employee emp = null;
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            try (PreparedStatement empStmt = connection.prepareStatement(empSql)) {
+                empStmt.setString(1, username);
+                try (ResultSet empRs = empStmt.executeQuery()) {
+                    if (empRs.next()) {
+                        emp = new Employee();
+                        emp.setEmployeeId(empRs.getInt("employee_id"));
+                        emp.setUsername(empRs.getString("username"));
+                        emp.setPassword(empRs.getString("password"));
+                        emp.setFirstName(empRs.getString("first_name"));
+                        emp.setLastName(empRs.getString("last_name"));
+                        emp.setIcPassport(empRs.getString("ic_passport"));
+                        emp.setFamilyDetails(empRs.getString("family_details"));
+                        emp.setLeaveBalance(empRs.getInt("leave_balance"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RemoteException("Error fetching employee details: " + e.getMessage(), e);
+        }
+
+        return emp;
     }
 
     @Override
@@ -195,9 +223,43 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     }
 
     @Override
-    public List<LeaveApplication> generateYearlyReport(int year) throws RemoteException {
-        // TODO: query all leave applications for given year
-        return new ArrayList<>();
+    public List<LeaveApplication> generateYearlyReport(int employeeId, int year) throws RemoteException {
+        List<LeaveApplication> report = new ArrayList<>();
+
+        String sql = "SELECT * FROM leave_applications " +
+                "WHERE employee_id = ? AND YEAR(start_date) = ? " +
+                "ORDER BY start_date ASC";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to database");
+            }
+
+            stmt.setInt(1, employeeId);
+            stmt.setInt(2, year);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                LeaveApplication leave = new LeaveApplication();
+
+                leave.setLeaveId(rs.getInt("id"));
+                leave.setEmployeeId(rs.getInt("employee_id"));
+                leave.setStartDate(String.valueOf(rs.getDate("start_date")));
+                leave.setEndDate(String.valueOf(rs.getDate("end_date")));
+                leave.setStatus(rs.getString("status"));
+
+                report.add(leave);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RemoteException("Error generating yearly report");
+        }
+
+        return report;
     }
 
     @Override

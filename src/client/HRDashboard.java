@@ -1,8 +1,11 @@
 package client;
 
+import model.Employee;
 import remote.HRMService;
 import javax.swing.*;
 import java.awt.*;
+import java.rmi.RemoteException;
+import java.util.List;
 
 // HR Staff dashboard - accessible only after HR login
 public class HRDashboard extends JFrame {
@@ -35,7 +38,41 @@ public class HRDashboard extends JFrame {
 
         yearlyReportButton = new JButton("Generate Yearly Leave Report");
         yearlyReportButton.addActionListener(e -> {
-            // TODO: call service.generateYearlyReport(year) and display
+            List<Employee> employees;
+
+            try {
+                employees = service.getAllEmployees();
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            String[] usernames = new String[employees.size()];
+
+            for (int i = 0; i < employees.size(); i++) {
+                usernames[i] = employees.get(i).getUsername();
+            }
+
+            JComboBox<String> employeeComboBox = new JComboBox<>(usernames);
+
+            int result = JOptionPane.showConfirmDialog(
+                    this,
+                    employeeComboBox,
+                    "Select Employee",
+                    JOptionPane.OK_CANCEL_OPTION
+            );
+
+            if (result == JOptionPane.OK_OPTION) {
+                String selectedEmployee = (String) employeeComboBox.getSelectedItem();
+
+                if (selectedEmployee != null) {
+                    try {
+                        new YearlyLeaveReport(service, selectedEmployee).setVisible(true);
+                        dispose();
+                    } catch (RemoteException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            }
         });
 
         logoutButton = new JButton("Logout");
