@@ -1,8 +1,10 @@
 package client;
 
+import model.Employee;
 import remote.HRMService;
 import javax.swing.*;
 import java.awt.*;
+import java.rmi.RemoteException;
 
 public class EmployeeDashboard extends JFrame {
 
@@ -38,7 +40,8 @@ public class EmployeeDashboard extends JFrame {
 
         updatePersonalDetailsButton = new JButton("Update Personal Details");
         updatePersonalDetailsButton.addActionListener(e -> {
-            // TODO: open UpdatePersonalDetailsForm
+            UpdatePersonalDetailsForm form = new UpdatePersonalDetailsForm(service, username, updated -> this.username = updated);
+            form.setVisible(true);
         });
 
         updateFamilyDetailsButton = new JButton("Update Family Details");

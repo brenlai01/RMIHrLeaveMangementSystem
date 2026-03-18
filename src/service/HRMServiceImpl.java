@@ -146,7 +146,74 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     @Override
     public void updatePersonalDetails(Employee emp) throws RemoteException {
-        // TODO: update employee record in database
+        if (emp == null) {
+            throw new RemoteException("Employee object cannot be null");
+        }
+        if (emp.getEmployeeId() <= 0) {
+            throw new RemoteException("Invalid employee ID");
+        }
+        if (emp.getUsername() == null || emp.getUsername().trim().isEmpty()) {
+            throw new RemoteException("Username cannot be empty");
+        }
+        if (emp.getPassword() == null || emp.getPassword().trim().isEmpty()) {
+            throw new RemoteException("Password cannot be empty");
+        }
+        if (emp.getFirstName() == null || emp.getFirstName().trim().isEmpty()) {
+            throw new RemoteException("First name cannot be empty");
+        }
+        if (emp.getLastName() == null || emp.getLastName().trim().isEmpty()) {
+            throw new RemoteException("Last name cannot be empty");
+        }
+        if (emp.getIcPassport() == null || emp.getIcPassport().trim().isEmpty()) {
+            throw new RemoteException("IC/Passport cannot be empty");
+        }
+
+        String checkSql = "SELECT employee_id FROM employees WHERE employee_id = ?";
+        String duplicateSql = "SELECT employee_id FROM employees WHERE username = ? AND employee_id <> ?";
+        String updateSql = "UPDATE employees SET username = ?, password = ?, first_name = ?, last_name = ?, ic_passport = ? WHERE employee_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+                checkStmt.setInt(1, emp.getEmployeeId());
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new RemoteException("Employee with ID " + emp.getEmployeeId() + " does not exist");
+                    }
+                }
+            }
+
+            try (PreparedStatement duplicateStmt = connection.prepareStatement(duplicateSql)) {
+                duplicateStmt.setString(1, emp.getUsername().trim());
+                duplicateStmt.setInt(2, emp.getEmployeeId());
+                try (ResultSet rs = duplicateStmt.executeQuery()) {
+                    if (rs.next()) {
+                        throw new RemoteException("Username " + emp.getUsername() + " is already taken");
+                    }
+                }
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(updateSql)) {
+                stmt.setString(1, emp.getUsername().trim());
+                stmt.setString(2, emp.getPassword());
+                stmt.setString(3, emp.getFirstName().trim());
+                stmt.setString(4, emp.getLastName().trim());
+                stmt.setString(5, emp.getIcPassport().trim());
+                stmt.setInt(6, emp.getEmployeeId());
+
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new RemoteException("Failed to update personal details");
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RemoteException("Error updating personal details: " + e.getMessage(), e);
+        }
     }
 
     @Override

@@ -10,7 +10,7 @@ public class DatabaseConnection {
     // put your own username and password here
     private static final String URL = "jdbc:mysql://localhost:3306/hrm_db";
     private static final String USER = "root";
-    private static final String PASSWORD = "abcd1234";
+    private static final String PASSWORD = "Atsn1234";
 
     private DatabaseConnection() {
     }
