@@ -47,7 +47,8 @@ public class EmployeeDashboard extends JFrame {
 
         updateFamilyDetailsButton = new JButton("Update Family Details");
         updateFamilyDetailsButton.addActionListener(e -> {
-            // TODO: call service.updateFamilyDetails(...)
+            UpdateFamilyDetailsForm form = new UpdateFamilyDetailsForm(service, username);
+            form.setVisible(true);
         });
 
         checkLeaveBalanceButton = new JButton("Check Leave Balance");

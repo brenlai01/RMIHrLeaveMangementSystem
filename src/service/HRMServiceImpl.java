@@ -218,7 +218,41 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     @Override
     public void updateFamilyDetails(String username, String familyDetails) throws RemoteException {
-        // TODO: update family_details field in database
+        if (username == null || username.trim().isEmpty()) {
+            throw new RemoteException("Username cannot be empty");
+        }
+
+        String trimmedFamily = familyDetails != null ? familyDetails.trim() : "";
+        String checkSql = "SELECT employee_id FROM employees WHERE username = ?";
+        String updateSql = "UPDATE employees SET family_details = ? WHERE username = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+                checkStmt.setString(1, username.trim());
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new RemoteException("Employee with username " + username + " does not exist");
+                    }
+                }
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(updateSql)) {
+                stmt.setString(1, trimmedFamily);
+                stmt.setString(2, username.trim());
+
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new RemoteException("Failed to update family details");
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RemoteException("Error updating family details: " + e.getMessage(), e);
+        }
     }
 
     @Override
