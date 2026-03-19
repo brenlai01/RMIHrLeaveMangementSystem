@@ -259,15 +259,24 @@ public class EmployeeManagementForm extends JFrame {
             emp.setEmployeeId(Integer.parseInt(employeeIdField.getText()));
             emp.setUsername(usernameField.getText().trim());
 
-            String password = new String(passwordField.getPassword());
+            // If the password field is left empty, keep the existing password
+            String password = new String(passwordField.getPassword()).trim();
             if (password.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "Password cannot be empty. Please enter the password.",
-                        "Update Error",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
+                // Try to get the currently selected row's username (the old username before any edit)
+                int selectedRow = employeeTable.getSelectedRow();
+                String existingUsername = selectedRow >= 0 ? tableModel.getValueAt(selectedRow, 1).toString() : emp.getUsername();
+                Employee existing = service.getEmployeeDetails(existingUsername);
+                if (existing == null) {
+                    JOptionPane.showMessageDialog(this,
+                            "Unable to retrieve existing employee details. Password cannot be preserved.",
+                            "Update Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                emp.setPassword(existing.getPassword());
+            } else {
+                emp.setPassword(password);
             }
-            emp.setPassword(password);
 
             emp.setFirstName(firstNameField.getText().trim());
             emp.setLastName(lastNameField.getText().trim());
