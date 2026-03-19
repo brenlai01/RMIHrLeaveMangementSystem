@@ -84,7 +84,7 @@ public class YearlyLeaveReport extends JFrame {
         backButton.setPreferredSize(new Dimension(220, 40));
         backButton.addActionListener(e -> {
             dispose();
-            new EmployeeDashboard(service, employeeName).setVisible(true);
+            new HRDashboard(service, employeeName).setVisible(true);
         });
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
