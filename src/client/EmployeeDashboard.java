@@ -58,7 +58,8 @@ public class EmployeeDashboard extends JFrame {
 
         applyLeaveButton = new JButton("Apply for Leave");
         applyLeaveButton.addActionListener(e -> {
-            // TODO: open ApplyLeaveForm
+            new ApplyLeaveForm(service, username).setVisible(true);
+            this.setVisible(false);
         });
 
         viewLeaveStatusButton = new JButton("View Leave Status");

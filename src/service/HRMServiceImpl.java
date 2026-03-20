@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
+import java.sql.Timestamp;
 
 // Multithreading: RMI server automatically handles each client call in a separate thread
 public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
@@ -257,16 +258,69 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     @Override
     public int checkLeaveBalance(String username) throws RemoteException {
-        // TODO: query leave_balance from employees table
-        return 0;
+        int balance = 0;
+
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+
+            String sql = "SELECT leave_balance FROM employees WHERE username = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, username);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                balance = rs.getInt("leave_balance");
+            } else {
+                throw new RemoteException("User not found");
+            }
+
+            conn.close();
+
+        } catch (Exception e) {
+            throw new RemoteException("Error fetching leave balance: " + e.getMessage());
+        }
+
+        return balance;
     }
 
     @Override
-    public void applyLeave(LeaveApplication application) throws RemoteException {
-        // TODO: insert leave application into leave_applications table
-        // TODO: decide and implement leave balance deduction policy:
-        //       option A - deduct immediately on application (optimistic)
-        //       option B - deduct only after HR approves (recommended)
+    public void applyLeave(String username, String startDate, String endDate, String reason) throws RemoteException {
+
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+
+            // 3. Get employee_id
+            String getIdSql = "SELECT employee_id FROM employees WHERE username = ?";
+            PreparedStatement ps1 = conn.prepareStatement(getIdSql);
+            ps1.setString(1, username);
+
+            ResultSet rs = ps1.executeQuery();
+
+            if (!rs.next()) {
+                throw new RemoteException("User not found");
+            }
+
+            int employeeId = rs.getInt("employee_id");
+
+            // 4. Insert leave
+            String insertSql = "INSERT INTO leave_applications (employee_id, start_date, end_date, reason, status, applied_at) VALUES (?, ?, ?, ?, ?, ?)";
+
+            PreparedStatement ps2 = conn.prepareStatement(insertSql);
+            ps2.setInt(1, employeeId);
+            ps2.setString(2, startDate);
+            ps2.setString(3, endDate);
+            ps2.setString(4, reason);
+            ps2.setString(5, "PENDING");
+            ps2.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+
+            ps2.executeUpdate();
+
+            conn.close();
+
+        } catch (Exception e) {
+            throw new RemoteException("Error applying leave: " + e.getMessage());
+        }
     }
 
     @Override

@@ -22,7 +22,7 @@ public interface HRMService extends Remote {
 
     int checkLeaveBalance(String username) throws RemoteException;
 
-    void applyLeave(LeaveApplication application) throws RemoteException;
+    void applyLeave(String username, String startDate, String endDate, String reason) throws RemoteException;
 
     List<LeaveApplication> getLeaveHistory(String username) throws RemoteException;
 
