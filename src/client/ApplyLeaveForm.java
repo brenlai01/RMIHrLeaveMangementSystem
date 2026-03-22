@@ -4,6 +4,7 @@ import remote.HRMService;
 import javax.swing.*;
 import java.awt.*;
 import com.toedter.calendar.JDateChooser;
+import java.rmi.RemoteException;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 import javax.swing.border.EmptyBorder;
@@ -112,46 +113,58 @@ public class ApplyLeaveForm extends JFrame {
         String startDate = sdf.format(startRaw);
         String endDate = sdf.format(endRaw);
 
-        // Disable button to prevent multiple clicks
         submitButton.setEnabled(false);
 
-        new Thread(() -> {
+        // Shared variables to communicate between threads
+        final long[] daysRequested = new long[1];
+        final int[] balance = new int[1];
+
+        // Thread 1: calculate days and check leave balance
+        Thread checkThread = new Thread(() -> {
+            // System.out.println("Check thread running: " + Thread.currentThread().getName());
+            LocalDate start = LocalDate.parse(startDate);
+            LocalDate end = LocalDate.parse(endDate);
+            daysRequested[0] = ChronoUnit.DAYS.between(start, end) + 1;
+
+            if (daysRequested[0] <= 0) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Invalid date range!");
+                    submitButton.setEnabled(true);
+                });
+                return;
+            }
+
             try {
-                // Step 1: Calculate days requested
-                LocalDate start = LocalDate.parse(startDate);
-                LocalDate end = LocalDate.parse(endDate);
-                long daysRequested = ChronoUnit.DAYS.between(start, end) + 1;
+                balance[0] = service.checkLeaveBalance(username);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
-                if (daysRequested <= 0) {
+        // Thread 2: apply leave after checkThread finishes
+        Thread applyThread = new Thread(() -> {
+            try {
+                checkThread.join(); // wait for balance check
+
+                if (daysRequested[0] > balance[0]) {
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(this, "Invalid date range!");
+                        JOptionPane.showMessageDialog(this,
+                                "Not enough leave balance! You have " + balance[0] + " days left.");
                         submitButton.setEnabled(true);
                     });
                     return;
                 }
 
-                // Step 2: Check leave balance
-                int balance = service.checkLeaveBalance(username);
-
-                System.out.println("Checking leave balance for: " + username);
-                System.out.println("Leave balance from DB: " + balance);
-                if (daysRequested > balance) {
-                    SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(this, "Not enough leave balance! You have " + balance + " days left.");
-                        submitButton.setEnabled(true);
-                    });
-                    return;
-                }
-
-                // Step 3: Apply leave
+                // Apply leave
+                // System.out.println("Apply thread running: " + Thread.currentThread().getName());
                 service.applyLeave(username, startDate, endDate, reason);
 
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this, "Leave applied successfully!");
                     submitButton.setEnabled(true);
-                    dispose(); // close form
+                    dispose();
+                    new EmployeeDashboard(service, username).setVisible(true);
                 });
-
             } catch (Exception e) {
                 e.printStackTrace();
                 SwingUtilities.invokeLater(() -> {
@@ -159,6 +172,10 @@ public class ApplyLeaveForm extends JFrame {
                     submitButton.setEnabled(true);
                 });
             }
-        }).start();
+        });
+
+        // Start both threads
+        checkThread.start();
+        applyThread.start();
     }
 }
