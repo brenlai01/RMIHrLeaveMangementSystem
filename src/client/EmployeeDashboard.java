@@ -18,6 +18,7 @@ public class EmployeeDashboard extends JFrame {
     private JButton viewLeaveStatusButton;
     private JButton viewLeaveHistoryButton;
     private JButton logoutButton;
+    private JLabel leaveBalanceLabel;
 
     public EmployeeDashboard(HRMService service, String username) {
         super("HRM System - Employee Dashboard");
@@ -30,6 +31,16 @@ public class EmployeeDashboard extends JFrame {
     }
 
     private void initComponents() {
+
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 5, 10));
+
+        leaveBalanceLabel = new JLabel("Leave Balance: Loading...");
+
+        headerPanel.add(leaveBalanceLabel);
+        add(headerPanel, BorderLayout.NORTH);
+        loadLeaveBalance();
+
         JPanel panel = new JPanel(new GridLayout(8, 1, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
@@ -89,5 +100,15 @@ public class EmployeeDashboard extends JFrame {
         panel.add(logoutButton);
 
         add(panel);
+    }
+
+    private void loadLeaveBalance() {
+        try {
+            int balance = service.checkLeaveBalance(username);
+            leaveBalanceLabel.setText("Leave Balance: " + balance + " days");
+        } catch (Exception ex) {
+            leaveBalanceLabel.setText("Leave Balance: N/A");
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        }
     }
 }
