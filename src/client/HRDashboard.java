@@ -14,6 +14,7 @@ public class HRDashboard extends JFrame {
     private String username;
     private JButton employeeManagementButton;
     private JButton yearlyReportButton;
+    private JButton checkLeaveButton;
     private JButton logoutButton;
 
     public HRDashboard(HRMService service, String username) {
@@ -27,7 +28,7 @@ public class HRDashboard extends JFrame {
     }
 
     private void initComponents() {
-        JPanel panel = new JPanel(new GridLayout(3, 1, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
         employeeManagementButton = new JButton("Employee Management");
@@ -75,6 +76,12 @@ public class HRDashboard extends JFrame {
             }
         });
 
+        checkLeaveButton = new JButton("Check Leave Applications");
+        checkLeaveButton.addActionListener(e -> {
+            dispose();
+            new CheckLeaveForm(service, username).setVisible(true);
+        });
+
         logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> {
             dispose();
@@ -83,6 +90,7 @@ public class HRDashboard extends JFrame {
 
         panel.add(employeeManagementButton);
         panel.add(yearlyReportButton);
+        panel.add(checkLeaveButton);
         panel.add(logoutButton);
 
         add(panel);

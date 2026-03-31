@@ -378,6 +378,88 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     }
 
     @Override
+    public List<LeaveApplication> getPendingLeaveApplications() throws RemoteException {
+        List<LeaveApplication> pending = new ArrayList<>();
+
+        String sql = "SELECT leave_id, employee_id, start_date, end_date, reason, status, applied_at " +
+                "FROM leave_applications WHERE status = 'PENDING' ORDER BY applied_at DESC";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            while (rs.next()) {
+                LeaveApplication leave = new LeaveApplication();
+                leave.setLeaveId(rs.getInt("leave_id"));
+                leave.setEmployeeId(rs.getInt("employee_id"));
+                leave.setStartDate(String.valueOf(rs.getDate("start_date")));
+                leave.setEndDate(String.valueOf(rs.getDate("end_date")));
+                leave.setReason(rs.getString("reason"));
+                leave.setStatus(rs.getString("status"));
+                leave.setAppliedAt(String.valueOf(rs.getTimestamp("applied_at")));
+
+                pending.add(leave);
+            }
+
+        } catch (Exception e) {
+            throw new RemoteException("Error fetching pending leave applications: " + e.getMessage(), e);
+        }
+
+        return pending;
+    }
+
+    @Override
+    public void updateLeaveStatus(int leaveId, String status) throws RemoteException {
+        if (leaveId <= 0) {
+            throw new RemoteException("Invalid leave ID");
+        }
+        if (status == null || status.trim().isEmpty()) {
+            throw new RemoteException("Status cannot be empty");
+        }
+
+        String normalizedStatus = status.trim().toUpperCase();
+        if (!normalizedStatus.equals("APPROVED") && !normalizedStatus.equals("REJECTED") && !normalizedStatus.equals("PENDING")) {
+            throw new RemoteException("Invalid status value: " + status);
+        }
+
+        String checkSql = "SELECT leave_id FROM leave_applications WHERE leave_id = ?";
+        String updateSql = "UPDATE leave_applications SET status = ? WHERE leave_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+                checkStmt.setInt(1, leaveId);
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new RemoteException("Leave application with ID " + leaveId + " does not exist");
+                    }
+                }
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(updateSql)) {
+                stmt.setString(1, normalizedStatus);
+                stmt.setInt(2, leaveId);
+
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new RemoteException("Failed to update leave status");
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RemoteException("Error updating leave status: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public List<LeaveApplication> generateYearlyReport(int employeeId, int year) throws RemoteException {
         List<LeaveApplication> report = new ArrayList<>();
 
