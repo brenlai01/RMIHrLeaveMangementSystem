@@ -14,7 +14,6 @@ public class EmployeeDashboard extends JFrame {
     private JButton updatePersonalDetailsButton;
     private JButton updateFamilyDetailsButton;
     private JButton applyLeaveButton;
-    private JButton viewLeaveStatusButton;
     private JButton viewLeaveHistoryButton;
     private JButton logoutButton;
     private JLabel leaveBalanceLabel;
@@ -83,7 +82,6 @@ public class EmployeeDashboard extends JFrame {
         panel.add(updatePersonalDetailsButton);
         panel.add(updateFamilyDetailsButton);
         panel.add(applyLeaveButton);
-        panel.add(viewLeaveStatusButton);
         panel.add(viewLeaveHistoryButton);
         panel.add(logoutButton);
 
