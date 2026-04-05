@@ -9,7 +9,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
 import java.sql.Timestamp;
@@ -90,22 +89,23 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
         String sql = "INSERT INTO employees (username, password, first_name, last_name, ic_passport, family_details, leave_balance) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (Connection connection = DatabaseConnection.getConnection()) {
 
             if (connection == null) {
                 throw new RemoteException("Failed to connect to hrm_db");
             }
 
-            stmt.setString(1, emp.getUsername().trim());
-            stmt.setString(2, emp.getPassword());
-            stmt.setString(3, emp.getFirstName().trim());
-            stmt.setString(4, emp.getLastName().trim());
-            stmt.setString(5, emp.getIcPassport().trim());
-            stmt.setString(6, emp.getFamilyDetails() != null ? emp.getFamilyDetails().trim() : "");
-            stmt.setInt(7, emp.getLeaveBalance());
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setString(1, emp.getUsername().trim());
+                stmt.setString(2, emp.getPassword());
+                stmt.setString(3, emp.getFirstName().trim());
+                stmt.setString(4, emp.getLastName().trim());
+                stmt.setString(5, emp.getIcPassport().trim());
+                stmt.setString(6, emp.getFamilyDetails() != null ? emp.getFamilyDetails().trim() : "");
+                stmt.setInt(7, emp.getLeaveBalance());
 
-            stmt.executeUpdate();
+                stmt.executeUpdate();
+            }
 
         } catch (Exception e) {
             throw new RemoteException("Error registering employee: " + e.getMessage(), e);
@@ -260,22 +260,24 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     public int checkLeaveBalance(String username) throws RemoteException {
         int balance = 0;
 
-        try {
-            Connection conn = DatabaseConnection.getConnection();
+        String sql = "SELECT leave_balance FROM employees WHERE username = ?";
 
-            String sql = "SELECT leave_balance FROM employees WHERE username = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, username);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                balance = rs.getInt("leave_balance");
-            } else {
-                throw new RemoteException("User not found");
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            if (conn == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
             }
 
-            conn.close();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, username);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        balance = rs.getInt("leave_balance");
+                    } else {
+                        throw new RemoteException("User not found");
+                    }
+                }
+            }
 
         } catch (Exception e) {
             throw new RemoteException("Error fetching leave balance: " + e.getMessage());
@@ -287,36 +289,35 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     @Override
     public void applyLeave(String username, String startDate, String endDate, String reason) throws RemoteException {
 
-        try {
-            Connection conn = DatabaseConnection.getConnection();
+        // Get employee_id, then insert leave application
+        String getIdSql = "SELECT employee_id FROM employees WHERE username = ?";
+        String insertSql = "INSERT INTO leave_applications (employee_id, start_date, end_date, reason, status, applied_at) VALUES (?, ?, ?, ?, ?, ?)";
 
-            // 3. Get employee_id
-            String getIdSql = "SELECT employee_id FROM employees WHERE username = ?";
-            PreparedStatement ps1 = conn.prepareStatement(getIdSql);
-            ps1.setString(1, username);
-
-            ResultSet rs = ps1.executeQuery();
-
-            if (!rs.next()) {
-                throw new RemoteException("User not found");
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            if (conn == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
             }
 
-            int employeeId = rs.getInt("employee_id");
+            int employeeId;
+            try (PreparedStatement ps1 = conn.prepareStatement(getIdSql)) {
+                ps1.setString(1, username);
+                try (ResultSet rs = ps1.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new RemoteException("User not found");
+                    }
+                    employeeId = rs.getInt("employee_id");
+                }
+            }
 
-            // 4. Insert leave
-            String insertSql = "INSERT INTO leave_applications (employee_id, start_date, end_date, reason, status, applied_at) VALUES (?, ?, ?, ?, ?, ?)";
-
-            PreparedStatement ps2 = conn.prepareStatement(insertSql);
-            ps2.setInt(1, employeeId);
-            ps2.setString(2, startDate);
-            ps2.setString(3, endDate);
-            ps2.setString(4, reason);
-            ps2.setString(5, "PENDING");
-            ps2.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-
-            ps2.executeUpdate();
-
-            conn.close();
+            try (PreparedStatement ps2 = conn.prepareStatement(insertSql)) {
+                ps2.setInt(1, employeeId);
+                ps2.setString(2, startDate);
+                ps2.setString(3, endDate);
+                ps2.setString(4, reason);
+                ps2.setString(5, "PENDING");
+                ps2.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+                ps2.executeUpdate();
+            }
 
         } catch (Exception e) {
             throw new RemoteException("Error applying leave: " + e.getMessage());
@@ -357,7 +358,7 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
                         leave.setEndDate(String.valueOf(leaveRs.getDate("end_date")));
                         leave.setReason(leaveRs.getString("reason"));
                         leave.setStatus(leaveRs.getString("status"));
-                        leave.setAppliedAt(leaveRs.getString("applied_at"));
+                        leave.setAppliedAt(String.valueOf(leaveRs.getTimestamp("applied_at")));
 
                         history.add(leave);
                     }
@@ -373,8 +374,42 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     @Override
     public List<LeaveApplication> getLeaveStatus(String username) throws RemoteException {
-        // TODO: query leave applications filtered by status
-        return new ArrayList<>();
+        List<LeaveApplication> leaves = new ArrayList<>();
+
+        String leaveSql = "SELECT * FROM leave_applications WHERE employee_id = ? ORDER BY applied_at DESC";
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            if (connection == null) {
+                throw new RemoteException("Failed to connect to hrm_db");
+            }
+
+            Employee emp = getEmployeeDetails(username);
+            if (emp == null) {
+                return leaves;
+            }
+
+            try (PreparedStatement leaveStmt = connection.prepareStatement(leaveSql)) {
+                leaveStmt.setInt(1, emp.getEmployeeId());
+                try (ResultSet leaveRs = leaveStmt.executeQuery()) {
+                    while (leaveRs.next()) {
+                        LeaveApplication leave = new LeaveApplication();
+                        leave.setLeaveId(leaveRs.getInt("leave_id"));
+                        leave.setEmployeeId(leaveRs.getInt("employee_id"));
+                        leave.setStartDate(String.valueOf(leaveRs.getDate("start_date")));
+                        leave.setEndDate(String.valueOf(leaveRs.getDate("end_date")));
+                        leave.setReason(leaveRs.getString("reason"));
+                        leave.setStatus(leaveRs.getString("status"));
+                        leave.setAppliedAt(String.valueOf(leaveRs.getTimestamp("applied_at")));
+                        leaves.add(leave);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RemoteException("Error fetching leave status: " + e.getMessage(), e);
+        }
+
+        return leaves;
     }
 
     @Override
@@ -384,25 +419,27 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
         String sql = "SELECT leave_id, employee_id, start_date, end_date, reason, status, applied_at " +
                 "FROM leave_applications WHERE status = 'PENDING' ORDER BY applied_at DESC";
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+        try (Connection connection = DatabaseConnection.getConnection()) {
 
             if (connection == null) {
                 throw new RemoteException("Failed to connect to hrm_db");
             }
 
-            while (rs.next()) {
-                LeaveApplication leave = new LeaveApplication();
-                leave.setLeaveId(rs.getInt("leave_id"));
-                leave.setEmployeeId(rs.getInt("employee_id"));
-                leave.setStartDate(String.valueOf(rs.getDate("start_date")));
-                leave.setEndDate(String.valueOf(rs.getDate("end_date")));
-                leave.setReason(rs.getString("reason"));
-                leave.setStatus(rs.getString("status"));
-                leave.setAppliedAt(String.valueOf(rs.getTimestamp("applied_at")));
+            try (PreparedStatement stmt = connection.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
 
-                pending.add(leave);
+                while (rs.next()) {
+                    LeaveApplication leave = new LeaveApplication();
+                    leave.setLeaveId(rs.getInt("leave_id"));
+                    leave.setEmployeeId(rs.getInt("employee_id"));
+                    leave.setStartDate(String.valueOf(rs.getDate("start_date")));
+                    leave.setEndDate(String.valueOf(rs.getDate("end_date")));
+                    leave.setReason(rs.getString("reason"));
+                    leave.setStatus(rs.getString("status"));
+                    leave.setAppliedAt(String.valueOf(rs.getTimestamp("applied_at")));
+
+                    pending.add(leave);
+                }
             }
 
         } catch (Exception e) {
@@ -467,33 +504,33 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
                 "WHERE employee_id = ? AND YEAR(start_date) = ? " +
                 "ORDER BY start_date ASC";
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (Connection connection = DatabaseConnection.getConnection()) {
 
             if (connection == null) {
                 throw new RemoteException("Failed to connect to database");
             }
 
-            stmt.setInt(1, employeeId);
-            stmt.setInt(2, year);
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setInt(1, employeeId);
+                stmt.setInt(2, year);
 
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                LeaveApplication leave = new LeaveApplication();
-
-                leave.setLeaveId(rs.getInt("id"));
-                leave.setEmployeeId(rs.getInt("employee_id"));
-                leave.setStartDate(String.valueOf(rs.getDate("start_date")));
-                leave.setEndDate(String.valueOf(rs.getDate("end_date")));
-                leave.setStatus(rs.getString("status"));
-
-                report.add(leave);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        LeaveApplication leave = new LeaveApplication();
+                        leave.setLeaveId(rs.getInt("leave_id"));
+                        leave.setEmployeeId(rs.getInt("employee_id"));
+                        leave.setStartDate(String.valueOf(rs.getDate("start_date")));
+                        leave.setEndDate(String.valueOf(rs.getDate("end_date")));
+                        leave.setReason(rs.getString("reason"));
+                        leave.setStatus(rs.getString("status"));
+                        leave.setAppliedAt(String.valueOf(rs.getTimestamp("applied_at")));
+                        report.add(leave);
+                    }
+                }
             }
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RemoteException("Error generating yearly report");
+        } catch (Exception e) {
+            throw new RemoteException("Error generating yearly report: " + e.getMessage(), e);
         }
 
         return report;
@@ -504,25 +541,27 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
         String sql = "SELECT * FROM employees";
         List<Employee> employees = new ArrayList<>();
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+        try (Connection connection = DatabaseConnection.getConnection()) {
 
             if (connection == null) {
                 throw new RemoteException("Failed to connect to hrm_db");
             }
 
-            while (rs.next()) {
-                Employee emp = new Employee();
-                emp.setEmployeeId(rs.getInt("employee_id"));
-                emp.setUsername(rs.getString("username"));
-                emp.setPassword(rs.getString("password"));
-                emp.setFirstName(rs.getString("first_name"));
-                emp.setLastName(rs.getString("last_name"));
-                emp.setIcPassport(rs.getString("ic_passport"));
-                emp.setFamilyDetails(rs.getString("family_details"));
-                emp.setLeaveBalance(rs.getInt("leave_balance"));
-                employees.add(emp);
+            try (PreparedStatement stmt = connection.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    Employee emp = new Employee();
+                    emp.setEmployeeId(rs.getInt("employee_id"));
+                    emp.setUsername(rs.getString("username"));
+                    emp.setPassword(rs.getString("password"));
+                    emp.setFirstName(rs.getString("first_name"));
+                    emp.setLastName(rs.getString("last_name"));
+                    emp.setIcPassport(rs.getString("ic_passport"));
+                    emp.setFamilyDetails(rs.getString("family_details"));
+                    emp.setLeaveBalance(rs.getInt("leave_balance"));
+                    employees.add(emp);
+                }
             }
 
         } catch (Exception e) {
