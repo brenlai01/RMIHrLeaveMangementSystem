@@ -123,7 +123,7 @@ public class ViewLeaveHistoryForm extends JFrame {
                 isEmpty = true;
                 data = new Object[][] {{"No record history found", "", "", "", "", ""}};
             } else {
-                data = new Object[history.size()][5];
+                data = new Object[history.size()][6];
                 for (int i = 0; i < history.size(); i++) {
                     var app = history.get(i);
                     data[i][0] = app.getLeaveId();

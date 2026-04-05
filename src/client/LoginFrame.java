@@ -34,7 +34,6 @@ public class LoginFrame extends JFrame {
         }
 
         // TODO: [SECURITY - implement last] Use SSL/TLS socket factory before RMI lookup
-        // TODO: Connect to RMI server: service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService")
 
         initComponents();
     }

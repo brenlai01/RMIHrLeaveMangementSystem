@@ -64,7 +64,16 @@ public class EmployeeDashboard extends JFrame {
 
         checkLeaveBalanceButton = new JButton("Check Leave Balance");
         checkLeaveBalanceButton.addActionListener(e -> {
-            // TODO: call service.checkLeaveBalance(username) and display
+            try {
+                int balance = service.checkLeaveBalance(username);
+                JOptionPane.showMessageDialog(this,
+                        "Your current leave balance is: " + balance + " day(s).",
+                        "Leave Balance",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         applyLeaveButton = new JButton("Apply for Leave");
@@ -75,7 +84,8 @@ public class EmployeeDashboard extends JFrame {
 
         viewLeaveStatusButton = new JButton("View Leave Status");
         viewLeaveStatusButton.addActionListener(e -> {
-            // TODO: call service.getLeaveStatus(username) and display
+            new ViewLeaveHistoryForm(service, username).setVisible(true);
+            this.setVisible(false);
         });
 
         viewLeaveHistoryButton = new JButton("View Leave History");

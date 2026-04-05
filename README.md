@@ -59,8 +59,13 @@ RMIHrLeaveMangementSystem/
 │   ├── EmployeeDashboard.java
 │   ├── HRDashboard.java
 │   ├── ApplyLeaveForm.java
+│   ├── CheckLeaveForm.java
+│   ├── EmployeeManagementForm.java
+│   ├── UpdateFamilyDetailsForm.java
 │   ├── UpdatePersonalDetailsForm.java
-│   └── ViewLeaveHistoryForm.java
+│   ├── ViewLeaveHistoryForm.java
+│   ├── ViewPersonalDetailsForm.java
+│   └── YearlyLeaveReport.java
 │
 ├── sql/
 │   └── hrm_database.sql
@@ -81,17 +86,58 @@ RMIHrLeaveMangementSystem/
 
 ---
 
-## TODO List (Remaining for Team)
+## Gap Analysis & Remaining Work
 
-- [ ] Implement `HRMServiceImpl` — all database queries (Members 1 & 2)
-- [ ] Connect `LoginFrame` to RMI server (Member 3)
-- [ ] Implement HR dashboard features including yearly report (Member 3)
-- [ ] Implement employee dashboard navigation and leave application logic (Member 4)
-- [ ] Implement update personal details and leave history display (Member 5)
-- [ ] Create `RegisterEmployeeForm` for HR to register new employees
-- [ ] Hash passwords with SHA-256 before storing in database
-- [ ] **[SECURITY — confirm with lecturer first]** Add SSL/TLS for RMI communication using `javax.net.ssl`
-- [ ] Replace hard-coded database credentials with a config file or environment variable
+> **Assessment of current `main` branch.** The claim "only SSL/TLS remains" is **accurate** — all core business logic and UI wiring is now complete. The only outstanding item is SSL/TLS for RMI transport security.
+
+### ✅ Fully Implemented
+
+| Component | Notes |
+|---|---|
+| `HRMServer.java` | RMI registry starts on port 1099, binds service |
+| `HRMService.java` (remote interface) | All method signatures declared |
+| `DatabaseConnection.java` | JDBC connection to `hrm_db` |
+| `Employee.java` / `LeaveApplication.java` | Serializable models with all fields, getters/setters |
+| `HRMServiceImpl.login()` | Checks `hr_staff` then `employees` tables |
+| `HRMServiceImpl.registerEmployee()` | Full validation + INSERT |
+| `HRMServiceImpl.getEmployeeDetails()` | SELECT by username |
+| `HRMServiceImpl.updatePersonalDetails()` | Validation + duplicate check + UPDATE |
+| `HRMServiceImpl.updateFamilyDetails()` | Existence check + UPDATE |
+| `HRMServiceImpl.checkLeaveBalance()` | SELECT leave_balance |
+| `HRMServiceImpl.applyLeave()` | INSERT leave_applications |
+| `HRMServiceImpl.getLeaveHistory()` | SELECT all leaves by employee |
+| `HRMServiceImpl.getLeaveStatus()` | SELECT all leaves by employee (ordered by date) |
+| `HRMServiceImpl.getPendingLeaveApplications()` | SELECT WHERE status = PENDING |
+| `HRMServiceImpl.updateLeaveStatus()` | UPDATE leave status (APPROVED/REJECTED) |
+| `HRMServiceImpl.generateYearlyReport()` | SELECT by employee + year |
+| `HRMServiceImpl.getAllEmployees()` | SELECT all employees |
+| `HRMServiceImpl.updateEmployee()` | Full validation + UPDATE |
+| `HRMServiceImpl.deleteEmployee()` | Existence check + DELETE |
+| `HRMServiceImpl.setAndUpdateLeaveBalance()` | Validation + UPDATE leave_balance |
+| `LoginFrame.java` | RMI lookup + login + role-based redirect |
+| `HRDashboard.java` | All 3 buttons wired (Employee Management, Yearly Report, Check Leave) |
+| `EmployeeDashboard.java` | All 7 feature buttons wired |
+| `ApplyLeaveForm.java` | Date pickers, validation, two-thread submit logic |
+| `UpdatePersonalDetailsForm.java` | Pre-populated fields + handleUpdate() |
+| `UpdateFamilyDetailsForm.java` | Pre-populated fields + handleSave() |
+| `ViewLeaveHistoryForm.java` | Loads and displays leave history in table |
+| `EmployeeManagementForm.java` | Full CRUD (Create/Update/Delete) + table view |
+| `CheckLeaveForm.java` | Lists pending leaves with Approve/Reject actions |
+| `YearlyLeaveReport.java` | Table + summary (Total/Approved/Rejected/Pending) |
+| `hrm_database.sql` | 3 tables + sample data |
+
+### 🔴 One Remaining Functional Gap
+
+| Item | Effort | Priority |
+|---|---|---|
+| **SSL/TLS for RMI** — TODOs exist in `HRMServer.java` and `LoginFrame.java` | L | Implement last (after lecturer confirmation) |
+
+### ⚠️ Known Issues / Code Quality
+
+| Issue | File | Severity |
+|---|---|---|
+| Passwords stored as plain text in DB (`admin123`, `emp123`) | `hrm_database.sql` | Medium — acceptable for development/assignment, must be hashed for any real deployment |
+| DB credentials hardcoded (`root`/`root`) | `DatabaseConnection.java` | Low — each developer should use their own local credentials; consider `.gitignore` |
 
 ---
 
@@ -101,8 +147,11 @@ RMIHrLeaveMangementSystem/
 |----------------------------------|----------|----------|
 | Login                            | ✔        | ✔        |
 | Register Employee                | ✔        |          |
-| Set Employee Number of Leaves    | ✔        |          |
+| Update Employee Details          | ✔        |          |
+| Delete Employee                  | ✔        |          |
+| Set Employee Leave Balance       | ✔        |          |
 | View All Employees               | ✔        |          |
+| Approve / Reject Leave           | ✔        |          |
 | Generate Yearly Leave Report     | ✔        |          |
 | View Personal Details            |          | ✔        |
 | Update Personal Details          |          | ✔        |
@@ -114,11 +163,55 @@ RMIHrLeaveMangementSystem/
 
 ---
 
+## Multithreading
+
+Multithreading is present in **two places**:
+
+1. **RMI runtime (implicit):** Every incoming client call to `HRMServiceImpl` is dispatched on a separate RMI-managed thread. This happens automatically — no explicit thread creation is needed in your code. Each method in `HRMServiceImpl` is a potential concurrent execution point.
+
+2. **`ApplyLeaveForm.java` (explicit):** Two application-level threads are used when submitting leave:
+   - `checkThread` — calculates requested days and fetches current leave balance via RMI
+   - `applyThread` — waits for `checkThread` to finish (`checkThread.join()`), validates balance, then calls `service.applyLeave()` over RMI
+
+   This demonstrates deliberate use of `java.lang.Thread` and thread coordination (`join()`).
+
+---
+
+## How to Run
+
+### Prerequisites
+- Java 11+
+- MySQL running on `localhost:3306`
+- Maven
+
+### Setup
+1. Run `sql/hrm_database.sql` in your MySQL client to create the schema and sample data.
+2. Update `src/database/DatabaseConnection.java` with your MySQL username and password.
+
+### Start the Server
+```bash
+mvn compile
+mvn exec:java -Dexec.mainClass="server.HRMServer"
+```
+
+### Start the Client
+```bash
+mvn exec:java -Dexec.mainClass="client.LoginFrame"
+```
+
+### Sample Credentials
+| Role     | Username | Password |
+|----------|----------|----------|
+| HR Staff | admin    | admin123 |
+| Employee | emp001   | emp123   |
+
+---
+
 ## Security Notes
 
-> **SSL/TLS:** The server and client contain TODO comments for adding SSL/TLS socket factories to the RMI connection. This should be confirmed with the lecturer and **implemented last**, after all core business logic is complete.
+> **SSL/TLS:** The server (`HRMServer.java`) and client (`LoginFrame.java`) contain `TODO` comments for adding SSL/TLS socket factories to the RMI connection. This should be confirmed with the lecturer and **implemented last**, after all core business logic is complete.
 
-> **Passwords:** Sample data in `hrm_database.sql` uses plain-text passwords for development only. Replace with SHA-256 hashed values before any production or submission use.
+> **Passwords:** Sample data in `hrm_database.sql` uses plain-text passwords for development only. The SQL schema includes TODO comments to replace these with SHA-256 hashed values before any production or submission use.
 
 > **Important:** The GUI client must **NEVER** connect to MySQL directly — all database access must go through the RMI server.
 
