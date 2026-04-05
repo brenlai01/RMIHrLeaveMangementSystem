@@ -13,7 +13,6 @@ public class EmployeeDashboard extends JFrame {
     private JButton viewPersonalDetailsButton;
     private JButton updatePersonalDetailsButton;
     private JButton updateFamilyDetailsButton;
-    private JButton checkLeaveBalanceButton;
     private JButton applyLeaveButton;
     private JButton viewLeaveStatusButton;
     private JButton viewLeaveHistoryButton;
@@ -62,11 +61,6 @@ public class EmployeeDashboard extends JFrame {
             form.setVisible(true);
         });
 
-        checkLeaveBalanceButton = new JButton("Check Leave Balance");
-        checkLeaveBalanceButton.addActionListener(e -> {
-            // TODO: call service.checkLeaveBalance(username) and display
-        });
-
         applyLeaveButton = new JButton("Apply for Leave");
         applyLeaveButton.addActionListener(e -> {
             new ApplyLeaveForm(service, username).setVisible(true);
@@ -88,7 +82,6 @@ public class EmployeeDashboard extends JFrame {
         panel.add(viewPersonalDetailsButton);
         panel.add(updatePersonalDetailsButton);
         panel.add(updateFamilyDetailsButton);
-        panel.add(checkLeaveBalanceButton);
         panel.add(applyLeaveButton);
         panel.add(viewLeaveStatusButton);
         panel.add(viewLeaveHistoryButton);
