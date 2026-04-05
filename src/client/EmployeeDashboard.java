@@ -73,11 +73,6 @@ public class EmployeeDashboard extends JFrame {
             this.setVisible(false);
         });
 
-        viewLeaveStatusButton = new JButton("View Leave Status");
-        viewLeaveStatusButton.addActionListener(e -> {
-            // TODO: call service.getLeaveStatus(username) and display
-        });
-
         viewLeaveHistoryButton = new JButton("View Leave History");
         viewLeaveHistoryButton.addActionListener(e -> {
             new ViewLeaveHistoryForm(service, username).setVisible(true);
