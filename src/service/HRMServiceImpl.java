@@ -24,6 +24,8 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     @Override
     // Method to check user credentials in employee and HR tables
     public String login(String username, String password) throws RemoteException {
+        System.out.println("[THREAD] " + Thread.currentThread().getName() + " handling login()");
+
         String hrSql = "SELECT * FROM hr_staff WHERE username = ? AND password = ?";
         String empSql = "SELECT * FROM employees WHERE username = ? AND password = ?";
 
