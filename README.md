@@ -156,22 +156,25 @@ RMIHrLeaveMangementSystem/
 ### SSL/TLS Setup (JKS)
 
 Create a server keystore, then export/import certificate to a client truststore:
+Use one strong password value consistently wherever `<your-password>` appears below.
 
 ```bash
 mkdir -p ssl
 keytool -genkeypair -alias hrm-server -keyalg RSA -keysize 2048 -validity 3650 \
-  -keystore ssl/server-keystore.jks -storepass changeit -keypass changeit -dname "CN=localhost"
-keytool -exportcert -alias hrm-server -keystore ssl/server-keystore.jks -storepass changeit -rfc -file ssl/server-cert.cer
-keytool -importcert -alias hrm-server -file ssl/server-cert.cer -keystore ssl/client-truststore.jks -storepass changeit -noprompt
+  -keystore ssl/server-keystore.jks -storepass <your-password> -keypass <your-password> -dname "CN=localhost"
+keytool -exportcert -alias hrm-server -keystore ssl/server-keystore.jks -storepass <your-password> -rfc -file ssl/server-cert.cer
+keytool -importcert -alias hrm-server -file ssl/server-cert.cer -keystore ssl/client-truststore.jks -storepass <your-password> -noprompt
 ```
+
+> `CN=localhost` is for local testing only; for remote deployment, set CN/SAN to the actual server hostname/IP clients connect to.
 
 Server run properties:
 
 ```bash
 -Dhrm.ssl.keystore=ssl/server-keystore.jks
--Dhrm.ssl.keystore.password=changeit
+-Dhrm.ssl.keystore.password=<your-password>
 -Dhrm.ssl.truststore=ssl/server-keystore.jks
--Dhrm.ssl.truststore.password=changeit
+-Dhrm.ssl.truststore.password=<your-password>
 ```
 
 Client run properties:
@@ -179,7 +182,7 @@ Client run properties:
 ```bash
 -Dhrm.rmi.host=localhost
 -Dhrm.ssl.truststore=ssl/client-truststore.jks
--Dhrm.ssl.truststore.password=changeit
+-Dhrm.ssl.truststore.password=<your-password>
 ```
 
 > **Passwords:** Sample data in `hrm_database.sql` uses plain-text passwords for development only. Replace with SHA-256 hashed values before any production or submission use.

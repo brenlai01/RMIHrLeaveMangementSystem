@@ -38,10 +38,18 @@ public class LoginFrame extends JFrame {
     }
 
     private void configureSslProperties() {
-        String trustStorePath = System.getProperty("hrm.ssl.truststore", "ssl/client-truststore.jks");
-        String trustStorePassword = System.getProperty("hrm.ssl.truststore.password", "changeit");
+        String trustStorePath = requireProperty("hrm.ssl.truststore");
+        String trustStorePassword = requireProperty("hrm.ssl.truststore.password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+    }
+
+    private String requireProperty(String name) {
+        String value = System.getProperty(name);
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalStateException("Missing required JVM property: -D" + name + "=<value>");
+        }
+        return value;
     }
 
     private void initComponents() {
