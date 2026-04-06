@@ -81,6 +81,41 @@ RMIHrLeaveMangementSystem/
 
 ---
 
+## Individual Presentation Scope (What We Implemented)
+
+### Member 1 — @DingDingDing
+- Employee registration flow (`registerEmployee()`)
+- Employee profile retrieval (`getEmployeeDetails()`)
+- Demo flow: register employee → view profile
+
+### Member 2 — @AT
+- Personal details update module (`updatePersonalDetails()`)
+- Family details update module (`updateFamilyDetails()`)
+- Demo flow: edit details → verify persisted changes
+
+### Member 3 — @yuan🤩
+- Leave balance checking feature (`checkLeaveBalance()`)
+- Leave application workflow (`applyLeave()`)
+- Demo flow: check balance → apply leave
+
+### Member 4 — @Wan Rou
+- Leave history retrieval (`getLeaveHistory()`)
+- Leave status tracking and yearly report (`getLeaveStatus()`, `generateYearlyReport()`)
+- Demo flow: show history list → check status → display yearly report
+
+### Member 5 / Integration Owner — @Luwit (Brend)
+- Authentication and security scope (`login`, `logout`, SSL/TLS setup scope)
+- Integration walkthrough (end-to-end module flow, architecture, challenges/fixes)
+- Demo flow: secure login/security explanation + full-system handoff
+
+### Suggested Individual Presentation Format (same airtime for everyone)
+1. Scope (30s)
+2. Key logic / validation (45–60s)
+3. Demo flow (45–60s)
+4. One challenge faced + fix (30s)
+
+---
+
 ## TODO List (Remaining for Team)
 
 - [ ] Implement `HRMServiceImpl` — all database queries (Members 1 & 2)
@@ -90,7 +125,7 @@ RMIHrLeaveMangementSystem/
 - [ ] Implement update personal details and leave history display (Member 5)
 - [ ] Create `RegisterEmployeeForm` for HR to register new employees
 - [ ] Hash passwords with SHA-256 before storing in database
-- [ ] **[SECURITY — confirm with lecturer first]** Add SSL/TLS for RMI communication using `javax.net.ssl`
+- [x] Add SSL/TLS for RMI communication using `javax.net.ssl`
 - [ ] Replace hard-coded database credentials with a config file or environment variable
 
 ---
@@ -116,7 +151,40 @@ RMIHrLeaveMangementSystem/
 
 ## Security Notes
 
-> **SSL/TLS:** The server and client contain TODO comments for adding SSL/TLS socket factories to the RMI connection. This should be confirmed with the lecturer and **implemented last**, after all core business logic is complete.
+> **SSL/TLS:** The RMI server and client now use `SslRMIServerSocketFactory` and `SslRMIClientSocketFactory`. Configure stores with Java system properties before startup.
+
+### SSL/TLS Setup (JKS)
+
+Create a server keystore, then export/import certificate to a client truststore:
+Use one strong password value consistently wherever `<your-password>` appears below.
+For the generated keystore, `-keypass` and `-storepass` must match.
+
+```bash
+mkdir -p ssl
+keytool -genkeypair -alias hrm-server -keyalg RSA -keysize 2048 -validity 3650 \
+  -keystore ssl/server-keystore.jks -storepass <your-password> -keypass <your-password> -dname "CN=localhost"
+keytool -exportcert -alias hrm-server -keystore ssl/server-keystore.jks -storepass <your-password> -rfc -file ssl/server-cert.cer
+keytool -importcert -alias hrm-server -file ssl/server-cert.cer -keystore ssl/client-truststore.jks -storepass <your-password> -noprompt
+```
+
+> `CN=localhost` is for local testing only; for remote deployment, set CN/SAN to the actual server hostname/IP clients connect to.
+
+Server run properties:
+
+```bash
+-Dhrm.ssl.keystore=ssl/server-keystore.jks
+-Dhrm.ssl.keystore.password=<your-password>
+-Dhrm.ssl.truststore=ssl/server-keystore.jks
+-Dhrm.ssl.truststore.password=<your-password>
+```
+
+Client run properties:
+
+```bash
+-Dhrm.rmi.host=localhost
+-Dhrm.ssl.truststore=ssl/client-truststore.jks
+-Dhrm.ssl.truststore.password=<your-password>
+```
 
 > **Passwords:** Sample data in `hrm_database.sql` uses plain-text passwords for development only. Replace with SHA-256 hashed values before any production or submission use.
 

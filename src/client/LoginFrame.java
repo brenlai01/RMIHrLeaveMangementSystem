@@ -3,10 +3,10 @@ package client;
 import remote.HRMService;
 import javax.swing.*;
 import java.awt.*;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+import security.SslPropertyUtil;
 
 public class LoginFrame extends JFrame {
 
@@ -24,8 +24,10 @@ public class LoginFrame extends JFrame {
         setLocationRelativeTo(null);
 
         try {
-            // RMB to change this when use other device
-            service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService");
+            configureSslProperties();
+            String host = System.getProperty("hrm.rmi.host", "localhost");
+            Registry registry = LocateRegistry.getRegistry(host, 1099, new SslRMIClientSocketFactory());
+            service = (HRMService) registry.lookup("HRMService");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null,
                     "Failed to connect to RMI server: " + e.getMessage(),
@@ -33,10 +35,14 @@ public class LoginFrame extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
 
-        // TODO: [SECURITY - implement last] Use SSL/TLS socket factory before RMI lookup
-        // TODO: Connect to RMI server: service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService")
-
         initComponents();
+    }
+
+    private void configureSslProperties() {
+        String trustStorePath = SslPropertyUtil.requireProperty("hrm.ssl.truststore");
+        String trustStorePassword = SslPropertyUtil.requireProperty("hrm.ssl.truststore.password");
+        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
     }
 
     private void initComponents() {
