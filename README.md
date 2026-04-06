@@ -86,43 +86,33 @@ RMIHrLeaveMangementSystem/
 ### Member 1 — @DingDingDing
 - Employee registration flow (`registerEmployee()`)
 - Employee profile retrieval (`getEmployeeDetails()`)
-- Leave balance initialization and update logic (`setAndUpdateLeaveBalance()`)
-- Demo flow: create employee → view details → show leave balance update
+- Demo flow: register employee → view profile
 
 ### Member 2 — @AT
 - Personal details update module (`updatePersonalDetails()`)
 - Family details update module (`updateFamilyDetails()`)
-- Input validation and update behavior for employee profile changes
-- Demo flow: edit personal/family details → verify persisted changes
+- Demo flow: edit details → verify persisted changes
 
 ### Member 3 — @yuan🤩
 - Leave balance checking feature (`checkLeaveBalance()`)
 - Leave application workflow (`applyLeave()`)
-- Leave request validation (balance check and request data validation)
-- Demo flow: check balance → apply leave → verify request submission/state
+- Demo flow: check balance → apply leave
 
 ### Member 4 — @Wan Rou
 - Leave history retrieval (`getLeaveHistory()`)
-- Leave status tracking (`getLeaveStatus()`)
-- Yearly leave report generation (`generateYearlyReport()`)
-- Demo flow: show history list → check leave status → display yearly report
+- Leave status tracking and yearly report (`getLeaveStatus()`, `generateYearlyReport()`)
+- Demo flow: show history list → check status → display yearly report
 
 ### Member 5 / Integration Owner — @Luwit (Brend)
-- Authentication flow (`login`, `logout`)
-- SSL/TLS setup scope for secure client-server communication
-- Security-related implementation choices for session/auth flow
-- Demo flow: secure login/logout + SSL/TLS configuration explanation
-- Integration of all member modules into one end-to-end workflow
-- System architecture and responsibility mapping across components
-- Integration challenges encountered and fixes applied
-- Final full-system walkthrough and conclusion
+- Authentication and security scope (`login`, `logout`, SSL/TLS setup scope)
+- Integration walkthrough (end-to-end module flow, architecture, challenges/fixes)
+- Demo flow: secure login/security explanation + full-system handoff
 
-### Suggested Individual Presentation Format (2–4 mins each)
-1. Scope
-2. What was implemented
-3. Key logic / validation
-4. Demo flow
-5. Challenge faced + fix
+### Suggested Individual Presentation Format (same airtime for everyone)
+1. Scope (30s)
+2. Key logic / validation (45–60s)
+3. Demo flow (45–60s)
+4. One challenge faced + fix (30s)
 
 ---
 
