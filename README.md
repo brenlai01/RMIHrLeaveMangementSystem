@@ -107,13 +107,11 @@ RMIHrLeaveMangementSystem/
 - Yearly leave report generation (`generateYearlyReport()`)
 - Demo flow: show history list → check leave status → display yearly report
 
-### Member 5 — @Luwit
+### Member 5 / Integration Owner — @Luwit (Brend)
 - Authentication flow (`login`, `logout`)
 - SSL/TLS setup scope for secure client-server communication
 - Security-related implementation choices for session/auth flow
 - Demo flow: secure login/logout + SSL/TLS configuration explanation
-
-### Brend — Integration / Overall System
 - Integration of all member modules into one end-to-end workflow
 - System architecture and responsibility mapping across components
 - Integration challenges encountered and fixes applied
