@@ -85,7 +85,6 @@ public class LeaveApplication implements Serializable {
 
     @Override
     public String toString() {
-        // TODO: return a meaningful string representation of the LeaveApplication
         return super.toString();
     }
 }

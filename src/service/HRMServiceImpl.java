@@ -381,12 +381,6 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
     }
 
     @Override
-    public List<LeaveApplication> getLeaveStatus(String username) throws RemoteException {
-        // TODO: query leave applications filtered by status
-        return new ArrayList<>();
-    }
-
-    @Override
     public List<LeaveApplication> getPendingLeaveApplications() throws RemoteException {
         List<LeaveApplication> pending = new ArrayList<>();
 

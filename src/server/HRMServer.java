@@ -14,7 +14,7 @@ public class HRMServer {
 
     public static void main(String[] args) {
         System.out.println("========================================");
-        System.out.println("   HRM RMI Server - Crest Solutions    ");
+        System.out.println("        HRM RMI Server - JB Tech        ");
         System.out.println("========================================");
 
         try {

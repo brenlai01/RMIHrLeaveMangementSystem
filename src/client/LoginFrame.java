@@ -77,7 +77,6 @@ public class LoginFrame extends JFrame {
 
         getRootPane().setDefaultButton(loginButton);
 
-        // TODO: style components as needed
         add(panel);
     }
 

@@ -10,6 +10,9 @@ out/
 build/
 target/
 
+# Ignore DatabaseConnection source file
+src/database/DatabaseConnection.java
+
 # IDE files - ignore most of .idea but keep module config
 .idea/
 !.idea/modules.xml

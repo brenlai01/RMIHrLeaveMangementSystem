@@ -26,8 +26,6 @@ public interface HRMService extends Remote {
 
     List<LeaveApplication> getLeaveHistory(String username) throws RemoteException;
 
-    List<LeaveApplication> getLeaveStatus(String username) throws RemoteException;
-
     List<LeaveApplication> generateYearlyReport(int employeeId, int year) throws RemoteException;
 
     List<LeaveApplication> getPendingLeaveApplications() throws RemoteException;
