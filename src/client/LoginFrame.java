@@ -5,8 +5,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import javax.rmi.ssl.SslRMIClientSocketFactory;
-import security.SslPropertyUtil;
 
 public class LoginFrame extends JFrame {
 
@@ -24,9 +22,8 @@ public class LoginFrame extends JFrame {
         setLocationRelativeTo(null);
 
         try {
-            configureSslProperties();
             String host = System.getProperty("hrm.rmi.host", "localhost");
-            Registry registry = LocateRegistry.getRegistry(host, 1099, new SslRMIClientSocketFactory());
+            Registry registry = LocateRegistry.getRegistry(host, 1099);
             service = (HRMService) registry.lookup("HRMService");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null,
@@ -36,13 +33,6 @@ public class LoginFrame extends JFrame {
         }
 
         initComponents();
-    }
-
-    private void configureSslProperties() {
-        String trustStorePath = SslPropertyUtil.requireProperty("hrm.ssl.truststore");
-        String trustStorePassword = SslPropertyUtil.requireProperty("hrm.ssl.truststore.password");
-        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
-        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
     }
 
     private void initComponents() {
