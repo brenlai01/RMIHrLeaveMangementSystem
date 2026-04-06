@@ -5,6 +5,8 @@ import model.Employee;
 import model.LeaveApplication;
 import database.DatabaseConnection;
 import java.rmi.RemoteException;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,6 +21,11 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     public HRMServiceImpl() throws RemoteException {
         super();
+    }
+
+    public HRMServiceImpl(RMIClientSocketFactory clientSocketFactory,
+                          RMIServerSocketFactory serverSocketFactory) throws RemoteException {
+        super(0, clientSocketFactory, serverSocketFactory);
     }
 
     @Override

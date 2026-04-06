@@ -125,7 +125,7 @@ RMIHrLeaveMangementSystem/
 - [ ] Implement update personal details and leave history display (Member 5)
 - [ ] Create `RegisterEmployeeForm` for HR to register new employees
 - [ ] Hash passwords with SHA-256 before storing in database
-- [ ] **[SECURITY — confirm with lecturer first]** Add SSL/TLS for RMI communication using `javax.net.ssl`
+- [x] Add SSL/TLS for RMI communication using `javax.net.ssl`
 - [ ] Replace hard-coded database credentials with a config file or environment variable
 
 ---
@@ -151,7 +151,36 @@ RMIHrLeaveMangementSystem/
 
 ## Security Notes
 
-> **SSL/TLS:** The server and client contain TODO comments for adding SSL/TLS socket factories to the RMI connection. This should be confirmed with the lecturer and **implemented last**, after all core business logic is complete.
+> **SSL/TLS:** The RMI server and client now use `SslRMIServerSocketFactory` and `SslRMIClientSocketFactory`. Configure stores with Java system properties before startup.
+
+### SSL/TLS Setup (JKS)
+
+Create a server keystore, then export/import certificate to a client truststore:
+
+```bash
+mkdir -p ssl
+keytool -genkeypair -alias hrm-server -keyalg RSA -keysize 2048 -validity 3650 \
+  -keystore ssl/server-keystore.jks -storepass changeit -keypass changeit -dname "CN=localhost"
+keytool -exportcert -alias hrm-server -keystore ssl/server-keystore.jks -storepass changeit -rfc -file ssl/server-cert.cer
+keytool -importcert -alias hrm-server -file ssl/server-cert.cer -keystore ssl/client-truststore.jks -storepass changeit -noprompt
+```
+
+Server run properties:
+
+```bash
+-Dhrm.ssl.keystore=ssl/server-keystore.jks
+-Dhrm.ssl.keystore.password=changeit
+-Dhrm.ssl.truststore=ssl/server-keystore.jks
+-Dhrm.ssl.truststore.password=changeit
+```
+
+Client run properties:
+
+```bash
+-Dhrm.rmi.host=localhost
+-Dhrm.ssl.truststore=ssl/client-truststore.jks
+-Dhrm.ssl.truststore.password=changeit
+```
 
 > **Passwords:** Sample data in `hrm_database.sql` uses plain-text passwords for development only. Replace with SHA-256 hashed values before any production or submission use.
 
