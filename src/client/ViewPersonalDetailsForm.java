@@ -5,12 +5,15 @@ import remote.HRMService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
 
 public class ViewPersonalDetailsForm extends JFrame {
 
     private final HRMService service;
     private String username;
+    private final EmployeeDashboard dashboard;
     private JTextField employeeIdField;
     private JTextField usernameField;
     private JPasswordField passwordField;
@@ -22,9 +25,14 @@ public class ViewPersonalDetailsForm extends JFrame {
     private JButton backButton;
 
     public ViewPersonalDetailsForm(HRMService service, String username) {
+        this(service, username, null);
+    }
+
+    public ViewPersonalDetailsForm(HRMService service, String username, EmployeeDashboard dashboard) {
         super("Personal Details");
         this.service = service;
         this.username = username;
+        this.dashboard = dashboard;
         setSize(500, 360);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -71,7 +79,14 @@ public class ViewPersonalDetailsForm extends JFrame {
         footer.add(backButton);
         add(footer, BorderLayout.SOUTH);
 
-        backButton.addActionListener(e -> dispose());
+        backButton.addActionListener(e -> returnToDashboard());
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                showDashboard();
+            }
+        });
 
         loadDetails();
     }
@@ -114,6 +129,17 @@ public class ViewPersonalDetailsForm extends JFrame {
         gbc.gridx = 1;
         gbc.weightx = 1;
         panel.add(field, gbc);
+    }
+
+    private void returnToDashboard() {
+        dispose();
+        showDashboard();
+    }
+
+    private void showDashboard() {
+        if (dashboard != null) {
+            dashboard.setVisible(true);
+        }
     }
 }
 

@@ -4,6 +4,8 @@ import model.Employee;
 import remote.HRMService;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
 import java.util.function.Consumer;
 
@@ -11,6 +13,7 @@ public class UpdatePersonalDetailsForm extends JFrame {
 
     private HRMService service;
     private String username;
+    private final EmployeeDashboard dashboard;
     private Employee currentEmployee;
     private Consumer<String> usernameUpdateListener;
     private JTextField usernameField;
@@ -18,17 +21,23 @@ public class UpdatePersonalDetailsForm extends JFrame {
     private JTextField firstNameField;
     private JTextField lastNameField;
     private JTextField icPassportField;
+    private JLabel signedInLabel;
     private JButton updateButton;
     private JButton backButton;
 
     public UpdatePersonalDetailsForm(HRMService service, String username) {
-        this(service, username, null);
+        this(service, username, null, null);
     }
 
     public UpdatePersonalDetailsForm(HRMService service, String username, Consumer<String> usernameUpdateListener) {
+        this(service, username, null, usernameUpdateListener);
+    }
+
+    public UpdatePersonalDetailsForm(HRMService service, String username, EmployeeDashboard dashboard, Consumer<String> usernameUpdateListener) {
         super("Update Personal Details");
         this.service = service;
         this.username = username;
+        this.dashboard = dashboard;
         this.usernameUpdateListener = usernameUpdateListener;
         setSize(480, 380);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -48,8 +57,8 @@ public class UpdatePersonalDetailsForm extends JFrame {
         panel.add(header, gbc);
 
         gbc.gridy = 1;
-        JLabel signedIn = new JLabel("Signed in as: " + username, SwingConstants.CENTER);
-        panel.add(signedIn, gbc);
+        signedInLabel = new JLabel("Signed in as: " + username, SwingConstants.CENTER);
+        panel.add(signedInLabel, gbc);
 
         gbc.gridwidth = 1;
         gbc.gridx = 0; gbc.gridy = 2;
@@ -97,7 +106,14 @@ public class UpdatePersonalDetailsForm extends JFrame {
 
         loadEmployeeDetails();
         updateButton.addActionListener(e -> handleUpdate());
-        backButton.addActionListener(e -> dispose());
+        backButton.addActionListener(e -> returnToDashboard());
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                showDashboard();
+            }
+        });
 
         add(panel);
     }
@@ -131,6 +147,7 @@ public class UpdatePersonalDetailsForm extends JFrame {
             service.updatePersonalDetails(updated);
             currentEmployee = updated;
             this.username = newUsername;
+            refreshSignedInLabel();
             if (usernameUpdateListener != null) {
                 usernameUpdateListener.accept(newUsername);
             }
@@ -152,6 +169,23 @@ public class UpdatePersonalDetailsForm extends JFrame {
             }
         } catch (RemoteException ex) {
             JOptionPane.showMessageDialog(this, "Failed to load personal details: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void returnToDashboard() {
+        dispose();
+        showDashboard();
+    }
+
+    private void showDashboard() {
+        if (dashboard != null) {
+            dashboard.setVisible(true);
+        }
+    }
+
+    private void refreshSignedInLabel() {
+        if (signedInLabel != null) {
+            signedInLabel.setText("Signed in as: " + username);
         }
     }
 }
