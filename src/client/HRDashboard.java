@@ -89,8 +89,8 @@ public class HRDashboard extends JFrame {
         });
 
         panel.add(employeeManagementButton);
-        panel.add(yearlyReportButton);
         panel.add(checkLeaveButton);
+        panel.add(yearlyReportButton);
         panel.add(logoutButton);
 
         add(panel);

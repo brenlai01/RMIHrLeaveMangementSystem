@@ -39,25 +39,25 @@ public class EmployeeDashboard extends JFrame {
         add(headerPanel, BorderLayout.NORTH);
         loadLeaveBalance();
 
-        JPanel panel = new JPanel(new GridLayout(8, 1, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(0, 1, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
         viewPersonalDetailsButton = new JButton("View Personal Details");
         viewPersonalDetailsButton.addActionListener(e -> {
-            ViewPersonalDetailsForm form = new ViewPersonalDetailsForm(service, username);
-            form.setVisible(true);
+            new ViewPersonalDetailsForm(service, username, this).setVisible(true);
+            this.setVisible(false);
         });
 
         updatePersonalDetailsButton = new JButton("Update Personal Details");
         updatePersonalDetailsButton.addActionListener(e -> {
-            UpdatePersonalDetailsForm form = new UpdatePersonalDetailsForm(service, username, updated -> this.username = updated);
-            form.setVisible(true);
+            new UpdatePersonalDetailsForm(service, username, this, updated -> this.username = updated).setVisible(true);
+            this.setVisible(false);
         });
 
         updateFamilyDetailsButton = new JButton("Update Family Details");
         updateFamilyDetailsButton.addActionListener(e -> {
-            UpdateFamilyDetailsForm form = new UpdateFamilyDetailsForm(service, username);
-            form.setVisible(true);
+            new UpdateFamilyDetailsForm(service, username, this).setVisible(true);
+            this.setVisible(false);
         });
 
         applyLeaveButton = new JButton("Apply for Leave");

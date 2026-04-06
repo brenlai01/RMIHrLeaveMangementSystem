@@ -4,13 +4,20 @@ import model.Employee;
 import remote.HRMService;
 
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
 
 public class UpdateFamilyDetailsForm extends JFrame {
 
     private final HRMService service;
     private final String username;
+    private final EmployeeDashboard dashboard;
     private JRadioButton marriedYes;
     private JRadioButton marriedNo;
     private JSpinner childrenSpinner;
@@ -19,9 +26,14 @@ public class UpdateFamilyDetailsForm extends JFrame {
     private JButton backButton;
 
     public UpdateFamilyDetailsForm(HRMService service, String username) {
+        this(service, username, null);
+    }
+
+    public UpdateFamilyDetailsForm(HRMService service, String username, EmployeeDashboard dashboard) {
         super("Update Family Details");
         this.service = service;
         this.username = username;
+        this.dashboard = dashboard;
         setSize(520, 360);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -86,6 +98,7 @@ public class UpdateFamilyDetailsForm extends JFrame {
         gbc.gridx = 0; gbc.gridy = 3;
         formPanel.add(new JLabel("Emergency Contact:"), gbc);
         emergencyContactField = new JTextField(25);
+        applyNumericInputFilter(emergencyContactField);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -106,7 +119,14 @@ public class UpdateFamilyDetailsForm extends JFrame {
         loadCurrentDetails();
 
         saveButton.addActionListener(e -> handleSave());
-        backButton.addActionListener(e -> dispose());
+        backButton.addActionListener(e -> returnToDashboard());
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                showDashboard();
+            }
+        });
     }
 
     private void loadCurrentDetails() {
@@ -161,6 +181,11 @@ public class UpdateFamilyDetailsForm extends JFrame {
             return;
         }
 
+        if (!contact.matches("\\d+")) {
+            JOptionPane.showMessageDialog(this, "Emergency contact must contain numbers only.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append("Married: ").append(married ? "Yes" : "No").append('\n');
         sb.append("Children: ").append(children).append('\n');
@@ -171,6 +196,37 @@ public class UpdateFamilyDetailsForm extends JFrame {
             JOptionPane.showMessageDialog(this, "Family details updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
         } catch (RemoteException ex) {
             JOptionPane.showMessageDialog(this, "Failed to update family details: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void returnToDashboard() {
+        dispose();
+        showDashboard();
+    }
+
+    private void showDashboard() {
+        if (dashboard != null) {
+            dashboard.setVisible(true);
+        }
+    }
+
+    private void applyNumericInputFilter(JTextField field) {
+        ((AbstractDocument) field.getDocument()).setDocumentFilter(new DigitOnlyFilter());
+    }
+
+    private static class DigitOnlyFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            if (string != null && string.matches("\\d+")) {
+                super.insertString(fb, offset, string, attr);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+            if (text == null || text.isEmpty() || text.matches("\\d+")) {
+                super.replace(fb, offset, length, text, attrs);
+            }
         }
     }
 }
