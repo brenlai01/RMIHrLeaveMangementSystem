@@ -125,7 +125,7 @@ RMIHrLeaveMangementSystem/
 - [ ] Implement update personal details and leave history display (Member 5)
 - [ ] Create `RegisterEmployeeForm` for HR to register new employees
 - [ ] Hash passwords with SHA-256 before storing in database
-- [ ] Add SSL/TLS for RMI communication using `javax.net.ssl`
+- [ ] Re-implement SSL/TLS for RMI communication using `javax.net.ssl`
 - [ ] Replace hard-coded database credentials with a config file or environment variable
 
 ---
