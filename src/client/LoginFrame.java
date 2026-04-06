@@ -6,6 +6,7 @@ import java.awt.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
+import security.SslPropertyUtil;
 
 public class LoginFrame extends JFrame {
 
@@ -38,18 +39,10 @@ public class LoginFrame extends JFrame {
     }
 
     private void configureSslProperties() {
-        String trustStorePath = requireProperty("hrm.ssl.truststore");
-        String trustStorePassword = requireProperty("hrm.ssl.truststore.password");
+        String trustStorePath = SslPropertyUtil.requireProperty("hrm.ssl.truststore");
+        String trustStorePassword = SslPropertyUtil.requireProperty("hrm.ssl.truststore.password");
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
-    }
-
-    private String requireProperty(String name) {
-        String value = System.getProperty(name);
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalStateException("Missing required JVM property: -D" + name + "=<value>");
-        }
-        return value;
     }
 
     private void initComponents() {

@@ -157,6 +157,7 @@ RMIHrLeaveMangementSystem/
 
 Create a server keystore, then export/import certificate to a client truststore:
 Use one strong password value consistently wherever `<your-password>` appears below.
+For the generated keystore, `-keypass` and `-storepass` must match.
 
 ```bash
 mkdir -p ssl
