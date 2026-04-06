@@ -81,6 +81,53 @@ RMIHrLeaveMangementSystem/
 
 ---
 
+## Individual Presentation Scope (What We Implemented)
+
+### Member 1 — @DingDingDing
+- Employee registration flow (`registerEmployee()`)
+- Employee profile retrieval (`getEmployeeDetails()`)
+- Leave balance initialization and update logic (`setAndUpdateLeaveBalance()`)
+- Demo flow: create employee → view details → show leave balance update
+
+### Member 2 — @AT
+- Personal details update module (`updatePersonalDetails()`)
+- Family details update module (`updateFamilyDetails()`)
+- Input validation and update behavior for employee profile changes
+- Demo flow: edit personal/family details → verify persisted changes
+
+### Member 3 — @yuan🤩
+- Leave balance checking feature (`checkLeaveBalance()`)
+- Leave application workflow (`applyLeave()`)
+- Leave request validation (balance check and request data validation)
+- Demo flow: check balance → apply leave → verify request submission/state
+
+### Member 4 — @Wan Rou
+- Leave history retrieval (`getLeaveHistory()`)
+- Leave status tracking (`getLeaveStatus()`)
+- Yearly leave report generation (`generateYearlyReport()`)
+- Demo flow: show history list → check leave status → display yearly report
+
+### Member 5 — @Luwit
+- Authentication flow (`login`, `logout`)
+- SSL/TLS setup scope for secure client-server communication
+- Security-related implementation choices for session/auth flow
+- Demo flow: secure login/logout + SSL/TLS configuration explanation
+
+### Brend — Integration / Overall System
+- Integration of all member modules into one end-to-end workflow
+- System architecture and responsibility mapping across components
+- Integration challenges encountered and fixes applied
+- Final full-system walkthrough and conclusion
+
+### Suggested Individual Presentation Format (2–4 mins each)
+1. Scope
+2. What was implemented
+3. Key logic / validation
+4. Demo flow
+5. Challenge faced + fix
+
+---
+
 ## TODO List (Remaining for Team)
 
 - [ ] Implement `HRMServiceImpl` — all database queries (Members 1 & 2)
