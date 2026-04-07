@@ -484,7 +484,7 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
             while (rs.next()) {
                 LeaveApplication leave = new LeaveApplication();
 
-                leave.setLeaveId(rs.getInt("id"));
+                leave.setLeaveId(rs.getInt("leave_id"));
                 leave.setEmployeeId(rs.getInt("employee_id"));
                 leave.setStartDate(String.valueOf(rs.getDate("start_date")));
                 leave.setEndDate(String.valueOf(rs.getDate("end_date")));
