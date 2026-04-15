@@ -5,7 +5,6 @@ import model.Employee;
 import model.LeaveApplication;
 import database.DatabaseConnection;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,10 +14,10 @@ import java.util.ArrayList;
 import java.sql.Timestamp;
 
 // Multithreading: RMI server automatically handles each client call in a separate thread
-public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
+public class HRMServiceImpl implements HRMService {
 
     public HRMServiceImpl() throws RemoteException {
-        super();
+        // Don't call super() - we'll export manually with SSL socket factories in HRMServer
     }
 
     @Override

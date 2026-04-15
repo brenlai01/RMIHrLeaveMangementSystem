@@ -24,17 +24,30 @@ public class LoginFrame extends JFrame {
         setLocationRelativeTo(null);
 
         try {
-            // RMB to change this when use other device
-            service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService");
+            // Initialize SSL/TLS for secure RMI communication
+            System.out.println("[SECURITY] Initializing client SSL/TLS...");
+            
+            // Create SSL socket factory for RMI
+            RMISSLClientSocketFactory clientSocketFactory = new RMISSLClientSocketFactory();
+            
+            // Server address - change to server IP for remote connections
+            // For same computer: "localhost"
+            // For different computer on same WiFi: "192.168.x.x" (server's IP)
+            String serverHost = "192.168.0.185";  // <-- CHANGE THIS for remote connections
+            
+            // Connect to RMI registry with SSL
+            Registry registry = LocateRegistry.getRegistry(serverHost, 1099, clientSocketFactory);
+            
+            // Lookup the service
+            service = (HRMService) registry.lookup("HRMService");
+            System.out.println("[CLIENT] Connected to secure RMI server at " + serverHost);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null,
                     "Failed to connect to RMI server: " + e.getMessage(),
                     "Connection Error",
                     JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
-
-        // TODO: [SECURITY - implement last] Use SSL/TLS socket factory before RMI lookup
-        // TODO: Connect to RMI server: service = (HRMService) Naming.lookup("rmi://localhost:1099/HRMService")
 
         initComponents();
     }
