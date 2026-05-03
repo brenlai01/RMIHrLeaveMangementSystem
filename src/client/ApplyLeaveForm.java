@@ -44,7 +44,7 @@ public class ApplyLeaveForm extends JFrame {
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("Start Date:"), gbc);
 
-        startDateChooser = new JDateChooser(); // Corrected assignment
+        startDateChooser = new JDateChooser();
         startDateChooser.setDateFormatString("yyyy-MM-dd");
         startDateChooser.setMinSelectableDate(new Date());
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -54,7 +54,7 @@ public class ApplyLeaveForm extends JFrame {
         gbc.gridx = 0; gbc.gridy = 1; gbc.fill = GridBagConstraints.NONE;
         panel.add(new JLabel("End Date:"), gbc);
 
-        endDateChooser = new JDateChooser(); // Corrected assignment
+        endDateChooser = new JDateChooser();
         endDateChooser.setDateFormatString("yyyy-MM-dd");
         endDateChooser.setMinSelectableDate(new Date());
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -160,7 +160,7 @@ public class ApplyLeaveForm extends JFrame {
                 service.applyLeave(username, startDate, endDate, reason);
 
                 SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, "Leave applied successfully!");
+                    JOptionPane.showMessageDialog(this, "Leave application submitted successfully and is pending approval");
                     submitButton.setEnabled(true);
                     dispose();
                     new EmployeeDashboard(service, username).setVisible(true);
