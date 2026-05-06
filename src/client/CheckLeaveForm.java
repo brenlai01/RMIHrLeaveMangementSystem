@@ -128,7 +128,13 @@ public class CheckLeaveForm extends JFrame {
 			JOptionPane.showMessageDialog(this, "Leave status updated to " + status + ".");
 			loadPendingLeaves();
 		} catch (RemoteException e) {
-			JOptionPane.showMessageDialog(this, "Failed to update status: " + e.getMessage(),
+			Throwable cause = e;
+
+			while (cause.getCause() != null) {
+				cause = cause.getCause();
+			}
+
+			JOptionPane.showMessageDialog(this, cause.getMessage(),
 					"Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}

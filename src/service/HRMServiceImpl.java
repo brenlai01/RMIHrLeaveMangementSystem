@@ -292,7 +292,7 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
         try {
             Connection conn = DatabaseConnection.getConnection();
 
-            // 3. Get employee_id
+            // 3. Get employee_idusername
             String getIdSql = "SELECT employee_id FROM employees WHERE username = ?";
             PreparedStatement ps1 = conn.prepareStatement(getIdSql);
             ps1.setString(1, username);
@@ -416,20 +416,26 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
 
     @Override
     public void updateLeaveStatus(int leaveId, String status) throws RemoteException {
+
         if (leaveId <= 0) {
             throw new RemoteException("Invalid leave ID");
         }
+
         if (status == null || status.trim().isEmpty()) {
             throw new RemoteException("Status cannot be empty");
         }
 
         String normalizedStatus = status.trim().toUpperCase();
-        if (!normalizedStatus.equals("APPROVED") && !normalizedStatus.equals("REJECTED") && !normalizedStatus.equals("PENDING")) {
+
+        if (!normalizedStatus.equals("APPROVED") &&
+                !normalizedStatus.equals("REJECTED") &&
+                !normalizedStatus.equals("PENDING")) {
             throw new RemoteException("Invalid status value: " + status);
         }
 
-        String checkSql = "SELECT leave_id FROM leave_applications WHERE leave_id = ?";
+        String checkSql = "SELECT employee_id, start_date, end_date FROM leave_applications WHERE leave_id = ?";
         String updateSql = "UPDATE leave_applications SET status = ? WHERE leave_id = ?";
+        String updateBalanceSql = "UPDATE employees SET leave_balance = leave_balance - ? WHERE employee_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection()) {
 
@@ -437,15 +443,51 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
                 throw new RemoteException("Failed to connect to hrm_db");
             }
 
+            int userId = 0;
+            int totalDays = 0;
+
+            // 🔹 Step 1: Get user + dates
             try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
                 checkStmt.setInt(1, leaveId);
+
                 try (ResultSet rs = checkStmt.executeQuery()) {
                     if (!rs.next()) {
                         throw new RemoteException("Leave application with ID " + leaveId + " does not exist");
                     }
+
+                    userId = rs.getInt("employee_id");
+
+                    java.sql.Date startDate = rs.getDate("start_date");
+                    java.sql.Date endDate = rs.getDate("end_date");
+
+                    long diff = endDate.getTime() - startDate.getTime();
+                    totalDays = (int) (diff / (1000 * 60 * 60 * 24)) + 1;
                 }
             }
 
+            // 🔹 Step 2: If APPROVED → check balance first
+            if (normalizedStatus.equals("APPROVED")) {
+
+                String getBalanceSql = "SELECT leave_balance FROM employees WHERE employee_id = ?";
+
+                try (PreparedStatement stmt = connection.prepareStatement(getBalanceSql)) {
+                    stmt.setInt(1, userId);
+
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            int currentBalance = rs.getInt("leave_balance");
+
+                            if (totalDays > currentBalance) {
+                                throw new RemoteException("Leave not enough. Cannot approve.");
+                            }
+                        } else {
+                            throw new RemoteException("Employee not found");
+                        }
+                    }
+                }
+            }
+
+            // 🔹 Step 2: Update leave status
             try (PreparedStatement stmt = connection.prepareStatement(updateSql)) {
                 stmt.setString(1, normalizedStatus);
                 stmt.setInt(2, leaveId);
@@ -453,6 +495,16 @@ public class HRMServiceImpl extends UnicastRemoteObject implements HRMService {
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected == 0) {
                     throw new RemoteException("Failed to update leave status");
+                }
+            }
+
+            // 🔹 Step 3: If approved → deduct balance
+            if (normalizedStatus.equals("APPROVED")) {
+                try (PreparedStatement stmt = connection.prepareStatement(updateBalanceSql)) {
+                    stmt.setInt(1, totalDays);
+                    stmt.setInt(2, userId);
+
+                    stmt.executeUpdate();
                 }
             }
 
